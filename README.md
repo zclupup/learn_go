@@ -36,7 +36,43 @@
 
 ---
 
-## 📚 知识点总结（Lesson 01–07）
+## � 换新电脑后如何上手（重要）
+
+**Q: 新电脑需要执行 `git init` 吗？**
+> ❌ 不需要。`git init` 只在"第一次把普通文件夹变成 git 仓库"时用一次。
+> 新电脑直接 `git clone` 拉取，`.git` 版本信息会一起下载，天生就是 git 仓库。
+
+**Q: 新电脑需要安装 Go 环境吗？**
+> ✅ 需要。Go 是运行程序的工具，不随代码走。每台要跑代码的电脑都得装一次。
+
+### 新电脑操作步骤
+
+1. **安装 Go**：到 https://go.dev/dl/ 下载安装（Windows 一路下一步）。
+   安装后新开终端执行 `go version` 能看到版本号即成功。
+2. **克隆项目**（不要 `git init`）：
+   ```powershell
+   git clone https://github.com/zclupup/learn_go.git
+   cd learn_go
+   ```
+3. **确认 Go 路径**：本项目示例用的是 `D:\software\Go\bin\go.exe`；
+   新电脑的安装路径可能不同，若终端里直接 `go` 可用，就用 `go run` 即可，
+   否则把命令里的路径换成新电脑的 Go 安装路径。
+
+### 每日同步流程（避免多台电脑进度冲突）
+
+```powershell
+# 开始学习前：先拉取最新进度
+git pull
+
+# 学完之后：保存并推送
+git add .
+git commit -m "完成 LessonXX"
+git push
+```
+
+---
+
+## �📚 知识点总结（Lesson 01–07）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
