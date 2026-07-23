@@ -37,9 +37,10 @@
 | Lesson 05 | 数组与切片 slice | `lesson05_slice.go` | ✅ 完成 |
 | Lesson 06 | 函数 func | `lesson06_function.go` | ✅ 完成 |
 | Lesson 07 | 结构体 struct | `lesson07_struct.go` | ✅ 完成 |
-| Lesson 08 | map（字典 dict） | *待开始* | ⬜ 下一课 |
+| Lesson 08 | map（字典 dict） | `lesson08_map.go` | ✅ 完成 |
+| Lesson 09 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–07，下一课是 Lesson 08（map）。**
+**当前进度：已完成 Lesson 01–08，下一课是 Lesson 09。**
 
 ---
 
@@ -79,7 +80,7 @@ git push
 
 ---
 
-## �📚 知识点总结（Lesson 01–07）
+## �📚 知识点总结（Lesson 01–08）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -126,6 +127,15 @@ git push
 - 创建：`p := Person{Name: "zhangcl", Age: 23}`；访问：`p.Name`。
 - 首字母大写=公开，小写=私有。
 - ⭐ 分行写的复合字面量，**最后一个元素也要加逗号**（因为 Go 自动补分号机制）。
+
+### Lesson 08 — map（Go 版 dict）
+- 创建：`ages := map[string]int{"Alice": 30}`（`map[键类型]值类型`）。
+- 取值/新增/改：`ages["Bob"] = 26`（存在就改，不存在就增）；取值 `ages["Alice"]`。
+- 删除：`delete(ages, "Cathy")`（Python 用 `del`）。
+- ⭐ 逗号 ok 判断键是否存在：`v, ok := ages["x"]`，`ok` 为 true/false。
+  本质是 map 取值可返回 1 或 2 个值，写几个变量就返回几个（Go 没有 `in`）。
+- 遍历：`for k, v := range ages {}`；长度 `len(ages)`。
+- ⭐ map 遍历顺序是**随机的**（和 Python dict 保持插入顺序不同）。
 
 ---
 
