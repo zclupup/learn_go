@@ -131,10 +131,34 @@ git push
 
 ## 🚀 如何运行
 
+Go 运行代码有两种方式，理解区别很有用：
+
+### 方式一：`go run`（直接运行，最常用）
+一步到位：临时编译 + 立即执行，**不留下文件**。学习时都用这个。
 ```powershell
-# 运行某一课（把 NN_xxx 换成对应文件）
+# 把 NN_xxx 换成对应文件
 D:\software\Go\bin\go.exe run .\lesson01_variables.go
 ```
+
+### 方式二：`go build`（先编译成 exe，再执行）
+分两步：先生成一个独立的 `.exe` 可执行文件，再运行它。
+```powershell
+# 1) 编译：生成 lesson01_variables.exe（默认用源文件名）
+D:\software\Go\bin\go.exe build .\lesson01_variables.go
+
+# 2) 执行编译产物
+.\lesson01_variables.exe
+```
+> `-o` 可以自定义输出名：`go build -o app.exe .\lesson01_variables.go`
+> 编译产物 `.exe` 已在 `.gitignore` 中忽略，不会被提交到 git。
+
+### 两者区别（对比 Python 理解）
+| | go run | go build |
+|--|--------|----------|
+| 作用 | 编译 + 立即运行 | 只编译成 exe（要手动再运行） |
+| 产物 | 不生成文件 | 生成 `.exe` 可执行文件 |
+| 场景 | 学习/调试（快速看结果） | 交付程序（exe 拷到别的电脑也能跑，无需装 Go） |
+| Python 类比 | 类似 `python xxx.py` | 类似打包成 exe |
 
 > 注意：每个 `lessonNN_*.go` 都是独立的 `package main`，用 `go run 单个文件` 运行，
 > 不要 `go build` 整个目录（会因为多个 `main` 函数冲突）。
