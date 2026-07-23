@@ -1,0 +1,22 @@
+# 编译产物
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试产物
+*.test
+*.out
+
+# Go 工作区文件
+go.work
+go.work.sum
+
+# 依赖目录
+vendor/
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,97 @@
+# learn_go — 从零开始学 Go（Python 背景）
+
+这是一个 Go 语言入门学习项目，学习者有 Python 基础，从最简单的例子逐课学习 Go。
+
+---
+
+## 🤖 给 AI 助手的说明（换电脑后请先读这里）
+
+我是一名 **Go 小白**，只有 **Python 基础**，正在从简单例子逐步学习 Go。请遵守以下规则：
+
+1. **始终用小白视角**：变量、类型、语法等都要解释清楚，尽量对比 Python 来讲。
+2. **一课一个主题**：每课新建一个 `lessonNN_主题.go` 文件，保持简单可运行。
+3. **每课流程**：先讲概念 → 写示例代码 → 运行验证 → 给一个小练习。
+4. **回答我的疑问**：我经常会问"为什么"，请耐心解释底层原理。
+5. **运行命令**：本机 Go 路径为 `D:\software\Go\bin\go.exe`（终端里 `go` 有时不在 PATH）。
+   运行单课：`D:\software\Go\bin\go.exe run .\lessonNN_xxx.go`
+6. **定期总结**：我会每隔一段时间让你"总结这期间的新学习内容"，
+   请更新本 README 下方的「学习进度」表格和「知识点总结」。
+
+---
+
+## 📊 学习进度
+
+| 课程 | 主题 | 文件 | 状态 |
+|------|------|------|------|
+| Lesson 01 | 变量声明与基本类型 | `lesson01_variables.go` | ✅ 完成 |
+| Lesson 02 | 输入 + if 判断 | `lesson02_input_if.go` | ✅ 完成 |
+| Lesson 03 | 格式化输出 printf | `lesson03_printf.go` | ✅ 完成 |
+| Lesson 04 | for 循环 + 猜数字游戏 | `lesson04_for_guess.go` | ✅ 完成 |
+| Lesson 05 | 数组与切片 slice | `lesson05_slice.go` | ✅ 完成 |
+| Lesson 06 | 函数 func | `lesson06_function.go` | ✅ 完成 |
+| Lesson 07 | 结构体 struct | `lesson07_struct.go` | ✅ 完成 |
+| Lesson 08 | map（字典 dict） | *待开始* | ⬜ 下一课 |
+
+**当前进度：已完成 Lesson 01–07，下一课是 Lesson 08（map）。**
+
+---
+
+## 📚 知识点总结（Lesson 01–07）
+
+### Lesson 01 — 变量声明
+- 三种声明方式：
+  - 完整：`var name string = "zhangcl"`
+  - 推断：`var name = "zhangcl"`
+  - 短声明 ⭐：`name := "zhangcl"`（最常用，只能在函数内用）
+- `:=` 第一次声明用；`=` 给已存在的变量改值。
+- 基本类型：`string`、`int`、`float64`、`bool`。
+- 零值：声明未赋值时有默认值（int→0，string→""，bool→false）。
+
+### Lesson 02 — 输入 + if
+- 读取输入：`fmt.Scan(&age)`，**变量前必须加 `&`**（传变量地址，才能改到原变量）。
+- `if / else if / else`：条件不用括号，不加冒号，花括号 `{` 跟同行。
+
+### Lesson 03 — 格式化输出
+- `fmt.Printf("我叫%s，今年%d岁\n", name, age)`（类似 Python f-string）。
+- 占位符：`%s` 字符串、`%d` 整数、`%f` 小数（`%.1f` 保留1位）、`%t` 布尔、`\n` 换行。
+- `Print` 不换行 / `Println` 换行且参数间加空格 / `Printf` 格式化。
+- `fmt.Sprintf`：不打印，而是**生成字符串存到变量**。
+
+### Lesson 04 — for 循环
+- Go 只有 `for`：
+  - 计数：`for i := 0; i < 3; i++ {}`
+  - 条件（当 while 用）：`for count < 3 {}`
+  - 无限：`for {}` + `break`
+- `i++` 即 `i = i + 1`；`import "math/rand"` → `rand.Intn(10)` 生成 0~9。
+
+### Lesson 05 — 切片 slice（Go 版 list）
+- 创建：`fruits := []string{"苹果", "香蕉"}`
+- 追加：`fruits = append(fruits, "葡萄")`（必须用返回值接住）
+- 遍历：`for i, v := range fruits {}`
+- 切片操作：`numbers[1:4]`（含头不含尾），和 Python 一致。
+- 数组长度固定：`var arr [3]int`；切片长度可变。
+
+### Lesson 06 — 函数 func
+- 定义：`func add(a int, b int) int { return a + b }`（返回值类型写在最后）。
+- 多返回值：`func divide(a, b int) (int, int)`。
+- `_` 忽略不想要的返回值（Go 声明的变量必须被使用）。
+- ⭐ Go **不自动转换类型**：`float64(sum) / float64(len(nums))`。
+
+### Lesson 07 — 结构体 struct（Go 版 class）
+- 定义：`type Person struct { Name string; Age int }`
+- 方法：`func (p Person) Introduce() string {}`，`p` 相当于 Python 的 `self`。
+- 创建：`p := Person{Name: "zhangcl", Age: 23}`；访问：`p.Name`。
+- 首字母大写=公开，小写=私有。
+- ⭐ 分行写的复合字面量，**最后一个元素也要加逗号**（因为 Go 自动补分号机制）。
+
+---
+
+## 🚀 如何运行
+
+```powershell
+# 运行某一课（把 NN_xxx 换成对应文件）
+D:\software\Go\bin\go.exe run .\lesson01_variables.go
+```
+
+> 注意：每个 `lessonNN_*.go` 都是独立的 `package main`，用 `go run 单个文件` 运行，
+> 不要 `go build` 整个目录（会因为多个 `main` 函数冲突）。
