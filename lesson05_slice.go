@@ -32,15 +32,15 @@ func main() {
 	// 4) 切片操作（类似 Python 的 list[1:3]）
 	fmt.Println("\n切片操作:")
 	numbers := []int{0, 1, 2, 3, 4, 5}
-	fmt.Println("numbers[1:4]:", numbers[1:4])  // [1, 2, 3]  含头不含尾
-	fmt.Println("numbers[:3]:", numbers[:3])    // [0, 1, 2]
-	fmt.Println("numbers[3:]:", numbers[3:])    // [3, 4, 5]
+	fmt.Println("numbers[1:4]:", numbers[1:4]) // [1, 2, 3]  含头不含尾
+	fmt.Println("numbers[:3]:", numbers[:3])   // [0, 1, 2]
+	fmt.Println("numbers[3:]:", numbers[3:])   // [3, 4, 5]
 
 	// practice: 练习题
 	scores := []int{85, 92, 78}
 	scores = append(scores, 95)
 	sumScores := 0
-	for i, score := range scores{
+	for i, score := range scores {
 		fmt.Printf("第%d个成绩是:%d\n", i+1, score)
 		sumScores += score
 	}

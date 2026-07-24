@@ -15,7 +15,7 @@ func main() {
 	count := 0
 	for count < 3 {
 		fmt.Println("count =", count)
-		count++   // 相当于 count = count + 1
+		count++ // 相当于 count = count + 1
 	}
 
 	fmt.Println("\n=== 3. 无限循环 + break ===")
@@ -24,7 +24,7 @@ func main() {
 		fmt.Println("n =", n)
 		n++
 		if n >= 3 {
-			break   // 跳出循环（类似 Python 的 break）
+			break // 跳出循环（类似 Python 的 break）
 		}
 	}
 
@@ -32,7 +32,7 @@ func main() {
 	fmt.Println("\n=== 猜数字小游戏 ===")
 
 	// secret := 7
-	secret := rand.Intn(10) + 1   // 生成 1-10 的随机整数
+	secret := rand.Intn(10) + 1 // 生成 1-10 的随机整数
 	var guess int
 	attempts := 0
 
@@ -40,7 +40,6 @@ func main() {
 		fmt.Print("猜一个数字（1-10）: ")
 		fmt.Scan(&guess)
 		attempts++
-		
 
 		if guess < secret {
 			fmt.Println("太小了，再试试")
@@ -48,7 +47,7 @@ func main() {
 			fmt.Println("太大了，再试试")
 		} else {
 			fmt.Println("猜对了！你真棒！")
-			break   // 猜对就退出循环
+			break // 猜对就退出循环
 		}
 
 		if attempts >= 3 {

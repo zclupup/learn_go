@@ -9,9 +9,9 @@ func main() {
 	var hobby string = "reading"
 
 	// 2) Go 可以自动推断类型（最常用）
-	city := "Chengdu"    // string
-	height := 172.5      // float64
-	isStudent := true    // bool
+	city := "Chengdu"  // string
+	height := 172.5    // float64
+	isStudent := true  // bool
 	hobby2 := "coding" // string
 
 	// 3) 打印变量

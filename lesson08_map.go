@@ -49,21 +49,21 @@ func main() {
 
 	// prictise
 	capitals := map[string]string{
-		"China":"Beijing",
-		"America":"NewYork",
-		"Japan":"Tokyo",
+		"China":   "Beijing",
+		"America": "NewYork",
+		"Japan":   "Tokyo",
 	}
 
 	fmt.Println("the whole map:", capitals)
 	capitals["France"] = "Paris"
 	fmt.Println("after add France:", capitals)
 	capital, ok := capitals["Japan"]
-	if ok{
+	if ok {
 		fmt.Println("Japan exists, capital is:", capital)
-	}else{
+	} else {
 		fmt.Println("Japan does not exist")
 	}
-	for country, capital := range capitals{
+	for country, capital := range capitals {
 		fmt.Printf("%s's capital is %s\n", country, capital)
 	}
 }

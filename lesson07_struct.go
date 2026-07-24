@@ -18,15 +18,14 @@ func (p Person) Introduce() string {
 
 // definion struct Book
 type Book struct {
-	Title string
+	Title  string
 	Author string
-	Price float64
+	Price  float64
 }
 
 func (b Book) Info() string {
 	return fmt.Sprintf("book name: %s, author: %s, price: %.2f", b.Title, b.Author, b.Price)
 }
-
 
 func main() {
 	// ======== 1) 创建结构体（写字段名，推荐）========
@@ -53,7 +52,6 @@ func main() {
 		{Name: "Alice", Age: 30, City: "Beijing"},
 		{Name: "Bob", Age: 25, City: "Shanghai"},
 	}
-
 
 	fmt.Println("\n=== 通讯录 ===")
 	for _, p := range people {

@@ -33,7 +33,7 @@ func greet(name string, age int) string {
 
 func average(nums []int) (int, float64) {
 	sum := 0
-	for _, num := range nums{
+	for _, num := range nums {
 		sum += num
 	}
 	avg := float64(sum) / float64(len(nums))
