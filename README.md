@@ -68,6 +68,19 @@
 3. **确认 Go 路径**：本项目示例用的是 `D:\software\Go\bin\go.exe`；
    新电脑的安装路径可能不同，若终端里直接 `go` 可用，就用 `go run` 即可，
    否则把命令里的路径换成新电脑的 Go 安装路径。
+4. **设置国内代理**（在中国大陆很重要，否则下载依赖会卡住/失败）：
+   ```powershell
+   D:\software\Go\bin\go.exe env -w GOPROXY=https://goproxy.cn,direct
+   ```
+5. **安装 gopls（Go 语言服务器）**：VS Code 的悬停提示、函数签名、跳转定义（`F12`）
+   都依赖它。新电脑装完 Go 后需手动装一次：
+   ```powershell
+   D:\software\Go\bin\go.exe install golang.org/x/tools/gopls@latest
+   ```
+   - 装好后二进制在 `C:\Users\<用户名>\go\bin\gopls.exe`（即 `GOPATH\bin`）。
+   - 验证：`gopls version`（若命令找不到，用全路径 `& "$env:USERPROFILE\go\bin\gopls.exe" version`）。
+   - 让 VS Code 识别：`Ctrl+Shift+P` → 运行 `Go: Restart Language Server`（或 `Developer: Reload Window`）。
+   - 注意：安装过程可能几分钟（下载+编译），期间终端看似无输出属正常。
 
 ### 每日同步流程（避免多台电脑进度冲突）
 
