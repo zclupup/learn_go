@@ -9,11 +9,13 @@
 我是一名 **Go 小白**，只有 **Python 基础**，正在从简单例子逐步学习 Go。请遵守以下规则：
 
 1. **始终用小白视角**：变量、类型、语法等都要解释清楚，尽量对比 Python 来讲。
-2. **一课一个主题**：每课新建一个 `lessonNN_主题.go` 文件，保持简单可运行。
+2. **一课一个主题**：每课新建一个**独立子文件夹** `lessonNN/main.go`（不要放在根目录，
+   否则同目录多个 `func main()` 会因"同一文件夹=同一个包"而冲突报错）。
 3. **每课流程**：先讲概念 → 写示例代码 → 运行验证 → 给一个小练习。
 4. **回答我的疑问**：我经常会问"为什么"，请耐心解释底层原理。
 5. **运行命令**：本机 Go 路径为 `D:\software\Go\bin\go.exe`（终端里 `go` 有时不在 PATH）。
-   运行单课：`D:\software\Go\bin\go.exe run .\lessonNN_xxx.go`
+   运行单课：`D:\software\Go\bin\go.exe run ./lessonNN`（按目录运行，非单个文件）。
+   国内代理已设为 `goproxy.cn`；语言服务器 `gopls` 已安装（跳转/悬停可用）。
 6. **每课自动更新 README（重要）**：**每当完成一节新课**（示例写完、运行通过、我做完练习后），
    你必须**主动更新本 README**，无需我额外提醒，具体包括：
    - 在「学习进度」表格中把该课状态改为 ✅ 完成，并新增下一课占位行（⬜ 下一课）；
@@ -28,17 +30,17 @@
 
 ## 📊 学习进度
 
-| 课程 | 主题 | 文件 | 状态 |
+| 课程 | 主题 | 目录 | 状态 |
 |------|------|------|------|
-| Lesson 01 | 变量声明与基本类型 | `lesson01_variables.go` | ✅ 完成 |
-| Lesson 02 | 输入 + if 判断 | `lesson02_input_if.go` | ✅ 完成 |
-| Lesson 03 | 格式化输出 printf | `lesson03_printf.go` | ✅ 完成 |
-| Lesson 04 | for 循环 + 猜数字游戏 | `lesson04_for_guess.go` | ✅ 完成 |
-| Lesson 05 | 数组与切片 slice | `lesson05_slice.go` | ✅ 完成 |
-| Lesson 06 | 函数 func | `lesson06_function.go` | ✅ 完成 |
-| Lesson 07 | 结构体 struct | `lesson07_struct.go` | ✅ 完成 |
-| Lesson 08 | map（字典 dict） | `lesson08_map.go` | ✅ 完成 |
-| Lesson 09 | 错误处理 error | `lesson09_error.go` | ✅ 完成 |
+| Lesson 01 | 变量声明与基本类型 | `lesson01/` | ✅ 完成 |
+| Lesson 02 | 输入 + if 判断 | `lesson02/` | ✅ 完成 |
+| Lesson 03 | 格式化输出 printf | `lesson03/` | ✅ 完成 |
+| Lesson 04 | for 循环 + 猜数字游戏 | `lesson04/` | ✅ 完成 |
+| Lesson 05 | 数组与切片 slice | `lesson05/` | ✅ 完成 |
+| Lesson 06 | 函数 func | `lesson06/` | ✅ 完成 |
+| Lesson 07 | 结构体 struct | `lesson07/` | ✅ 完成 |
+| Lesson 08 | map（字典 dict） | `lesson08/` | ✅ 完成 |
+| Lesson 09 | 错误处理 error | `lesson09/` | ✅ 完成 |
 | Lesson 10 | *待定* | *待开始* | ⬜ 下一课 |
 
 **当前进度：已完成 Lesson 01–09，下一课是 Lesson 10。**
@@ -153,25 +155,30 @@ git push
 
 ## 🚀 如何运行
 
+> ⚠️ 重要：本项目每节课放在**独立子文件夹**里（如 `lesson09/main.go`）。
+> 因为 Go 规定「同一个文件夹 = 同一个包」，若把多个含 `func main()` 的文件放在同一目录会冲突报错。
+> 所以每课单独一个目录，各自是独立的 `package main`。
+
 Go 运行代码有两种方式，理解区别很有用：
 
 ### 方式一：`go run`（直接运行，最常用）
 一步到位：临时编译 + 立即执行，**不留下文件**。学习时都用这个。
 ```powershell
-# 把 NN_xxx 换成对应文件
-D:\software\Go\bin\go.exe run .\lesson01_variables.go
+# 运行某一课：go run ./目录名（编译该目录整个包并执行其 main 函数）
+D:\software\Go\bin\go.exe run ./lesson09
 ```
+> `go run ./lesson09` 编译该目录里所有 `.go` 文件，运行其中的 `func main()`，
+> 与文件叫不叫 `main.go` 无关，入口永远是 `main` 函数。
 
 ### 方式二：`go build`（先编译成 exe，再执行）
 分两步：先生成一个独立的 `.exe` 可执行文件，再运行它。
 ```powershell
-# 1) 编译：生成 lesson01_variables.exe（默认用源文件名）
-D:\software\Go\bin\go.exe build .\lesson01_variables.go
+# 1) 编译：在 lesson09 目录生成可执行文件
+D:\software\Go\bin\go.exe build -o lesson09.exe ./lesson09
 
 # 2) 执行编译产物
-.\lesson01_variables.exe
+.\lesson09.exe
 ```
-> `-o` 可以自定义输出名：`go build -o app.exe .\lesson01_variables.go`
 > 编译产物 `.exe` 已在 `.gitignore` 中忽略，不会被提交到 git。
 
 ### 两者区别（对比 Python 理解）
@@ -182,5 +189,7 @@ D:\software\Go\bin\go.exe build .\lesson01_variables.go
 | 场景 | 学习/调试（快速看结果） | 交付程序（exe 拷到别的电脑也能跑，无需装 Go） |
 | Python 类比 | 类似 `python xxx.py` | 类似打包成 exe |
 
-> 注意：每个 `lessonNN_*.go` 都是独立的 `package main`，用 `go run 单个文件` 运行，
-> 不要 `go build` 整个目录（会因为多个 `main` 函数冲突）。
+### 格式化代码
+```powershell
+D:\software\Go\bin\go.exe fmt ./...
+```
