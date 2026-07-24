@@ -38,9 +38,10 @@
 | Lesson 06 | 函数 func | `lesson06_function.go` | ✅ 完成 |
 | Lesson 07 | 结构体 struct | `lesson07_struct.go` | ✅ 完成 |
 | Lesson 08 | map（字典 dict） | `lesson08_map.go` | ✅ 完成 |
-| Lesson 09 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 09 | 错误处理 error | `lesson09_error.go` | ✅ 完成 |
+| Lesson 10 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–08，下一课是 Lesson 09。**
+**当前进度：已完成 Lesson 01–09，下一课是 Lesson 10。**
 
 ---
 
@@ -136,6 +137,17 @@ git push
   本质是 map 取值可返回 1 或 2 个值，写几个变量就返回几个（Go 没有 `in`）。
 - 遍历：`for k, v := range ages {}`；长度 `len(ages)`。
 - ⭐ map 遍历顺序是**随机的**（和 Python dict 保持插入顺序不同）。
+
+### Lesson 09 — 错误处理 error
+- ⭐ 思维转变：Go 不用 `try/except`，而是把 `error` 作为**最后一个返回值**。
+- 固定套路：出错 `return 0, err`；正常 `return v, nil`（`nil` 类似 Python 的 `None`）。
+- 调用后立刻检查：`if err != nil { ... }`（Go 最常见的一行）。
+- 创建错误两种方式：
+  - `errors.New("固定信息")`
+  - `fmt.Errorf("带变量 %d", x)`（可格式化）
+- 类型区别：`errors.New(...)` 和 `fmt.Errorf(...)` 返回 `error`；`fmt.Sprintf(...)` 返回 `string`。
+- 多包导入用括号：`import ( "errors"; "fmt" )`。
+- 看标准库源码：光标放在函数名上按 `F12`（跳转）或 `Alt+F12`（内联预览）。
 
 ---
 
