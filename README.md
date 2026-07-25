@@ -41,9 +41,10 @@
 | Lesson 07 | 结构体 struct | `lesson07/` | ✅ 完成 |
 | Lesson 08 | map（字典 dict） | `lesson08/` | ✅ 完成 |
 | Lesson 09 | 错误处理 error | `lesson09/` | ✅ 完成 |
-| Lesson 10 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 10 | 指针 pointer | `lesson10/` | ✅ 完成 |
+| Lesson 11 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–09，下一课是 Lesson 10。**
+**当前进度：已完成 Lesson 01–10，下一课是 Lesson 11。**
 
 ---
 
@@ -163,6 +164,14 @@ git push
 - 类型区别：`errors.New(...)` 和 `fmt.Errorf(...)` 返回 `error`；`fmt.Sprintf(...)` 返回 `string`。
 - 多包导入用括号：`import ( "errors"; "fmt" )`。
 - 看标准库源码：光标放在函数名上按 `F12`（跳转）或 `Alt+F12`（内联预览）。
+
+### Lesson 10 — 指针 pointer
+- 指针：存放另一个变量**内存地址**的变量（把变量想成盒子，地址就是盒子位置）。
+- `&x`：取 x 的地址（找到盒子在哪）。
+- `*p`：取地址上的值或修改它（打开盒子）。
+- `*int`：表示“一个指向 int 的指针”，常用于函数参数。
+- ⭐ 值传递 vs 指针传递：传普通值是复印件（改不到外面）；传指针是真地址（能改原变量）。
+- ⭐ 这就是 `fmt.Scan(&age)` 里 `&` 的原因：Scan 需要真地址才能把输入写回 `age`。
 
 ---
 
