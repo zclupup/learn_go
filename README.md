@@ -32,19 +32,20 @@
 
 | 课程 | 主题 | 目录 | 状态 |
 |------|------|------|------|
-| Lesson 01 | 变量声明与基本类型 | `lesson01/` | ✅ 完成 |
-| Lesson 02 | 输入 + if 判断 | `lesson02/` | ✅ 完成 |
-| Lesson 03 | 格式化输出 printf | `lesson03/` | ✅ 完成 |
-| Lesson 04 | for 循环 + 猜数字游戏 | `lesson04/` | ✅ 完成 |
-| Lesson 05 | 数组与切片 slice | `lesson05/` | ✅ 完成 |
-| Lesson 06 | 函数 func | `lesson06/` | ✅ 完成 |
-| Lesson 07 | 结构体 struct | `lesson07/` | ✅ 完成 |
-| Lesson 08 | map（字典 dict） | `lesson08/` | ✅ 完成 |
-| Lesson 09 | 错误处理 error | `lesson09/` | ✅ 完成 |
-| Lesson 10 | 指针 pointer | `lesson10/` | ✅ 完成 |
-| Lesson 11 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 01 | 变量声明与基本类型 | `lesson01_variables/` | ✅ 完成 |
+| Lesson 02 | 输入 + if 判断 | `lesson02_input_if/` | ✅ 完成 |
+| Lesson 03 | 格式化输出 printf | `lesson03_printf/` | ✅ 完成 |
+| Lesson 04 | for 循环 + 猜数字游戏 | `lesson04_for_guess/` | ✅ 完成 |
+| Lesson 05 | 数组与切片 slice | `lesson05_slice/` | ✅ 完成 |
+| Lesson 06 | 函数 func | `lesson06_function/` | ✅ 完成 |
+| Lesson 07 | 结构体 struct | `lesson07_struct/` | ✅ 完成 |
+| Lesson 08 | map（字典 dict） | `lesson08_map/` | ✅ 完成 |
+| Lesson 09 | 错误处理 error | `lesson09_error/` | ✅ 完成 |
+| Lesson 10 | 指针 pointer | `lesson10_pointer/` | ✅ 完成 |
+| Lesson 11 | 方法的指针接收者 | `lesson11_method_pointer_receiver/` | ✅ 完成 |
+| Lesson 12 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–10，下一课是 Lesson 11。**
+**当前进度：已完成 Lesson 01–11，下一课是 Lesson 12。**
 
 ---
 
@@ -173,11 +174,20 @@ git push
 - ⭐ 值传递 vs 指针传递：传普通值是复印件（改不到外面）；传指针是真地址（能改原变量）。
 - ⭐ 这就是 `fmt.Scan(&age)` 里 `&` 的原因：Scan 需要真地址才能把输入写回 `age`。
 
+### Lesson 11 — 方法的指针接收者
+- 方法接收者 `(a Account)` 就是方法所属的结构体。
+- 值接收者 `(a Account)`：拿到的是**复印件**，只适合只读方法（如 `Show`），改不到原结构体。
+- 指针接收者 `(a *Account)`：拿到的是**真地址**，能修改结构体字段（如 `Deposit`、`Withdraw`）。
+- ⭐ 要改结构体就用指针接收者；只读用值接收者（实际代码常统一用指针）。
+- 便利细节：调用 `acc.Deposit(50)` 时 Go 自动取地址，无需写 `(&acc).Deposit(50)`。
+- ⭐ 顶层函数/方法的书写顺序无关：`main` 放前面或后面都行（与 Python 不同）。
+- 模块 vs 包：`learn_go` 是**模块**（整个项目，由 `go.mod` 定义）；每个课程文件夹是一个**包**。
+
 ---
 
 ## 🚀 如何运行
 
-> ⚠️ 重要：本项目每节课放在**独立子文件夹**里（如 `lesson09/main.go`）。
+> ⚠️ 重要：本项目每节课放在**独立子文件夹**里（如 `lesson09_error/main.go`）。
 > 因为 Go 规定「同一个文件夹 = 同一个包」，若把多个含 `func main()` 的文件放在同一目录会冲突报错。
 > 所以每课单独一个目录，各自是独立的 `package main`。
 
@@ -187,16 +197,16 @@ Go 运行代码有两种方式，理解区别很有用：
 一步到位：临时编译 + 立即执行，**不留下文件**。学习时都用这个。
 ```powershell
 # 运行某一课：go run ./目录名（编译该目录整个包并执行其 main 函数）
-D:\software\Go\bin\go.exe run ./lesson09
+D:\software\Go\bin\go.exe run ./lesson09_error
 ```
-> `go run ./lesson09` 编译该目录里所有 `.go` 文件，运行其中的 `func main()`，
+> `go run ./lesson09_error` 编译该目录里所有 `.go` 文件，运行其中的 `func main()`，
 > 与文件叫不叫 `main.go` 无关，入口永远是 `main` 函数。
 
 ### 方式二：`go build`（先编译成 exe，再执行）
 分两步：先生成一个独立的 `.exe` 可执行文件，再运行它。
 ```powershell
-# 1) 编译：在 lesson09 目录生成可执行文件
-D:\software\Go\bin\go.exe build -o lesson09.exe ./lesson09
+# 1) 编译：在 lesson09_error 目录生成可执行文件
+D:\software\Go\bin\go.exe build -o lesson09.exe ./lesson09_error
 
 # 2) 执行编译产物
 .\lesson09.exe
