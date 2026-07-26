@@ -44,9 +44,10 @@
 | Lesson 10 | 指针 pointer | `lesson10_pointer/` | ✅ 完成 |
 | Lesson 11 | 方法的指针接收者 | `lesson11_method_pointer_receiver/` | ✅ 完成 |
 | Lesson 12 | 接口 interface | `lesson12_interface/` | ✅ 完成 |
-| Lesson 13 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 13 | defer / panic / recover | `lesson13_defer_panic_recover/` | ✅ 完成 |
+| Lesson 14 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–11，下一课是 Lesson 12。**
+**当前进度：已完成 Lesson 01–12，下一课是 Lesson 13。**
 
 ---
 
@@ -191,6 +192,14 @@ git push
 - 接口参数：`func describe(a Animal)` 能接收任何满足 `Animal` 的类型（一个函数处理多种类型）。
 - 接口切片 `[]Animal{d, c}`：把不同具体类型放在同一切片里。
 - 类型断言 `a.(Dog)`：把接口还原为具体类型；用 `dog, ok := a.(Dog)` 的“逗号 ok”形式更安全（不会 panic）。
+
+### Lesson 13 — defer / panic / recover
+- `defer`：将语句延迟到函数返回前执行，常用于收尾（关文件/释放资源），类似 Python 的 `finally`/`with`。
+- 多个 `defer`：**后进先出**（像栈），最后写的最先执行。
+- `panic`：立即中断正常流程（类似未捕获的异常）；如 `10/0` 会自动 panic。
+- `recover`：只能在 `defer` 里生效，能抓住 panic 让程序不崩溃。
+- ⭐ 地道模式：`defer func() { if r := recover(); r != nil { err = fmt.Errorf(...) } }()` 把 panic 转成 error。
+- 注意：正常代码优先返回 `error`；`panic/recover` 只用于真正异常的情况。
 
 ---
 
