@@ -43,7 +43,8 @@
 | Lesson 09 | 错误处理 error | `lesson09_error/` | ✅ 完成 |
 | Lesson 10 | 指针 pointer | `lesson10_pointer/` | ✅ 完成 |
 | Lesson 11 | 方法的指针接收者 | `lesson11_method_pointer_receiver/` | ✅ 完成 |
-| Lesson 12 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 12 | 接口 interface | `lesson12_interface/` | ✅ 完成 |
+| Lesson 13 | *待定* | *待开始* | ⬜ 下一课 |
 
 **当前进度：已完成 Lesson 01–11，下一课是 Lesson 12。**
 
@@ -182,6 +183,16 @@ git push
 - 便利细节：调用 `acc.Deposit(50)` 时 Go 自动取地址，无需写 `(&acc).Deposit(50)`。
 - ⭐ 顶层函数/方法的书写顺序无关：`main` 放前面或后面都行（与 Python 不同）。
 - 模块 vs 包：`learn_go` 是**模块**（整个项目，由 `go.mod` 定义）；每个课程文件夹是一个**包**。
+
+### Lesson 12 — 接口 interface
+- 接口定义“能做什么”（一组方法），不关心“是谁”：`type Animal interface { Sound() string }`。
+- ⭐ 隐式实现：只要类型拥有接口的所有方法，就**自动**满足该接口（无需声明 implements）。
+- 类似 Python 的鸭子类型，但是在**编译时**检查。
+- 接口参数：`func describe(a Animal)` 能接收任何满足 `Animal` 的类型（一个函数处理多种类型）。
+- 接口切片 `[]Animal{d, c}`：把不同具体类型放在同一切片里。
+- 类型断言 `a.(Dog)`：把接口还原为具体类型；用 `dog, ok := a.(Dog)` 的“逗号 ok”形式更安全（不会 panic）。
+
+---
 
 ---
 
