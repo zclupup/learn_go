@@ -2,6 +2,11 @@ package main
 
 import "fmt"
 
+type Person struct {
+	Name string
+	Age  int
+}
+
 // ======== defer：延迟执行 ========
 // defer 后面的语句会"延迟"到函数即将返回时才执行。
 // 常用于收尾工作：关闭文件、释放资源。类似 Python 的 finally / with。
@@ -37,6 +42,17 @@ func safeDivide(a, b int) (result int, err error) {
 	return result, nil
 }
 
+// practice safeGet
+func safeGet(nums []int, index int) (val int, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("occur panic: %v", r)
+		}
+	}()
+	val = nums[index] // 可能会 panic
+	return val, nil
+}
+
 func main() {
 	fmt.Println("=== 1. defer 基础 ===")
 	deferDemo()
@@ -54,4 +70,18 @@ func main() {
 	fmt.Println("10 / 0 =", r2, "err =", err2)
 
 	fmt.Println("\n程序没有崩溃，继续正常结束 ✅")
+
+	fmt.Println("\n=== 4. safeGet ===")
+	nums := []int{1, 2, 3}
+	val, err := safeGet(nums, 1)
+	fmt.Println("safeGet(nums, 1) =", val, "err =", err)
+
+	val, err = safeGet(nums, 5)
+	fmt.Println("safeGet(nums, 5) =", val, "err =", err)
+
+	fmt.Println("\n=== 5. %v / %+v / %T ===")
+	person := Person{Name: "Alice", Age: 18}
+	fmt.Printf("%%v  -> %v\n", person)
+	fmt.Printf("%%+v -> %+v\n", person)
+	fmt.Printf("%%T  -> %T\n", person)
 }
