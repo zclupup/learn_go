@@ -47,7 +47,7 @@
 | Lesson 13 | defer / panic / recover | `lesson13_defer_panic_recover/` | ✅ 完成 |
 | Lesson 14 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–12，下一课是 Lesson 13。**
+**当前进度：已完成 Lesson 01–13，下一课是 Lesson 14。**
 
 ---
 
