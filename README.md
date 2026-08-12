@@ -45,9 +45,10 @@
 | Lesson 11 | 方法的指针接收者 | `lesson11_method_pointer_receiver/` | ✅ 完成 |
 | Lesson 12 | 接口 interface | `lesson12_interface/` | ✅ 完成 |
 | Lesson 13 | defer / panic / recover | `lesson13_defer_panic_recover/` | ✅ 完成 |
-| Lesson 14 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 14 | goroutine + channel 并发入门 | `lesson14_goroutine_channel/` | ✅ 完成 |
+| Lesson 15 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–13，下一课是 Lesson 14。**
+**当前进度：已完成 Lesson 01–14，下一课是 Lesson 15。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -100,7 +101,7 @@ git push
 
 ---
 
-## �📚 知识点总结（Lesson 01–08）
+## �📚 知识点总结（Lesson 01–14）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -200,6 +201,21 @@ git push
 - `recover`：只能在 `defer` 里生效，能抓住 panic 让程序不崩溃。
 - ⭐ 地道模式：`defer func() { if r := recover(); r != nil { err = fmt.Errorf(...) } }()` 把 panic 转成 error。
 - 注意：正常代码优先返回 `error`；`panic/recover` 只用于真正异常的情况。
+
+### Lesson 14 — goroutine + channel 并发入门
+- `go 函数()`：启动一个 goroutine 并发执行；主 goroutine 不会自动等待它。
+- `time.Sleep(...)`：本课里只是教学演示，临时给 goroutine 执行时间；正式等待任务完成应优先用 `sync.WaitGroup` 或 channel。
+- `make(chan T)`：创建传递 `T` 类型数据的 channel；`ch <- value` 发送，`value := <-ch` 接收。
+- channel 像队列：每个发送进去的值只能被成功接收一次，读出来后就从 channel 中消失；不同于 slice/list 可反复读取同一元素。
+- 匿名函数可以访问外层作用域变量（闭包）；`go func(s StudentScore) { ... }(student)` 是把当前循环变量作为参数传进去，避免并发里误用循环变量。
+- `sync.WaitGroup` 可理解为等待 goroutine 的计数器：`Add(1)` 增加等待数量，`Done()` 完成一个，`Wait()` 阻塞直到计数器变为 0。
+- 只有显式调用 `Add(1)` 才会让 WaitGroup 计数器增加；单纯多写一个 `go func()` 不会自动加一。
+- `WaitGroup` 要传指针 `&wg`：多个 goroutine 必须操作同一个计数器；传值会拷贝副本，`Done()` 改不到原来的 `wg`。
+- `select` 用来同时等待多个 channel 操作；本课用 `select + time.After(...)` 做超时等待，避免错误实验永久卡住。
+- `close(ch)` 表示“不再发送新数据”；已在 channel 里的数据仍可继续读。`for value := range ch` 会读到 channel 被关闭且数据读完才结束。
+- 两种收集结果方式：已知结果数量时可固定接收 `len(items)` 次，不必 `close`；不想手动数结果时常用 `WaitGroup + close + range`。
+- `make([]T, 0, cap)`：创建长度为 0、容量为 `cap` 的切片，适合后续用 `append` 收集结果；`make([]T, n)` 则会直接生成长度为 `n` 的零值元素。
+- 练习：用 `StudentScore` 和 `ScoreResult` 结构体并发计算学生成绩结果，为以后 Gin 中结构体响应、JSON 返回和并发处理打基础。
 
 ---
 
