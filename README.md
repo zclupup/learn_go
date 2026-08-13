@@ -46,9 +46,10 @@
 | Lesson 12 | 接口 interface | `lesson12_interface/` | ✅ 完成 |
 | Lesson 13 | defer / panic / recover | `lesson13_defer_panic_recover/` | ✅ 完成 |
 | Lesson 14 | goroutine + channel 并发入门 | `lesson14_goroutine_channel/` | ✅ 完成 |
-| Lesson 15 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 15 | context 上下文与超时控制 | `lesson15_context/` | ✅ 完成 |
+| Lesson 16 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–14，下一课是 Lesson 15。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–15，下一课是 Lesson 16。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -101,7 +102,7 @@ git push
 
 ---
 
-## �📚 知识点总结（Lesson 01–14）
+## 📚 知识点总结（Lesson 01–15）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -216,6 +217,23 @@ git push
 - 两种收集结果方式：已知结果数量时可固定接收 `len(items)` 次，不必 `close`；不想手动数结果时常用 `WaitGroup + close + range`。
 - `make([]T, 0, cap)`：创建长度为 0、容量为 `cap` 的切片，适合后续用 `append` 收集结果；`make([]T, n)` 则会直接生成长度为 `n` 的零值元素。
 - 练习：用 `StudentScore` 和 `ScoreResult` 结构体并发计算学生成绩结果，为以后 Gin 中结构体响应、JSON 返回和并发处理打基础。
+
+### Lesson 15 — context 上下文与超时控制
+- `context` 是 Go 里的"任务控制器"，用来传递取消信号、超时信号、请求生命周期。
+- `context.Background()`：最基础的空 context，一般作为起点。
+- `context.WithTimeout(parent, duration)`：在父 context 基础上加超时功能，返回两个值：新 context 和取消函数。
+- `context.WithCancel(parent)`：在父 context 基础上加手动取消功能，只有调用 `cancel()` 才会触发取消。
+- ⭐ `WithTimeout` 返回值必须用两个变量接：第一个是新 context，第二个是取消函数 `cancel`。
+- ⭐ 第一个参数是"父 context"，可以用前面声明的 `ctx`，也可以直接写 `context.Background()`。
+- `ctx.Done()`：返回一个 channel，context 取消/超时时会收到信号。
+- `ctx.Err()`：返回取消原因——`context deadline exceeded`（超时）或 `context canceled`（手动取消）。
+- ⭐ `WithTimeout` 到时间**自动**触发 `ctx.Done()`；`WithCancel` 需要**手动**调用 `cancel()` 才触发。
+- 固定写法：`ctx, cancel := context.WithTimeout(...); defer cancel()` —— 不管成功失败都释放资源。
+- `select` 配合 `ctx.Done()` 和 `time.After()` 实现"任务完成 vs 超时取消"的竞争等待。
+- Python 对比：像给任务设置 timeout，也像传一个"取消信号"给后台协程。
+- ⭐ 匿名结构体切片：`[]struct{name string; delay time.Duration}{...}` 是声明+赋值一体写法，适合临时数据。
+- ⭐ 闭包陷阱：`for` 循环里启动 goroutine 时，要把循环变量作为参数传进去，否则所有 goroutine 共享同一个变量。
+- ⭐ 并发执行顺序不固定：goroutine 启动顺序由调度器决定，但结果顺序通常按完成时间（先完成先进 channel）。
 
 ---
 
