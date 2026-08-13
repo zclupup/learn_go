@@ -79,7 +79,7 @@ func main() {
 	val, err = safeGet(nums, 5)
 	fmt.Println("safeGet(nums, 5) =", val, "err =", err)
 
-	fmt.Println("\n=== 5. %v / %+v / %T ===")
+	fmt.Println("\n=== 5. format verbs: v / +v / T ===")
 	person := Person{Name: "Alice", Age: 18}
 	fmt.Printf("%%v  -> %v\n", person)
 	fmt.Printf("%%+v -> %+v\n", person)

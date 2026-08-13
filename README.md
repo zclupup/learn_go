@@ -50,9 +50,10 @@
 | Lesson 16 | JSON 编码/解码 + struct tag | `lesson16_json/` | ✅ 完成 |
 | Lesson 17 | 文件读写 + JSON 文件 | `lesson17_file_json/` | ✅ 完成 |
 | Lesson 18 | 包 package、目录结构与模块复习 | `lesson18_package_module/` | ✅ 完成 |
-| Lesson 19 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 19 | 测试入门 | `lesson19_testing/` | ✅ 完成 |
+| Lesson 20 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–18，下一课是 Lesson 19。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–19，下一课是 Lesson 20。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -105,7 +106,7 @@ git push
 
 ---
 
-## 📚 知识点总结（Lesson 01–16）
+## 📚 知识点总结（Lesson 01–19）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -277,6 +278,20 @@ git push
 - `func (c Course) Summary() string {}` 里的 `(c Course)` 叫方法接收者，表示 `Summary` 是 `Course` 类型的方法；`c` 类似 Python 方法里的 `self`。
 - Go 命名习惯：项目/module 常用短小、全小写路径；目录和 package 名通常短小、全小写、尽量不用下划线；文件名全小写，多个词常用下划线，如 `student_service.go`；变量/函数/方法用驼峰，如 `studentName`、`NewStudent`；常量也常用驼峰，少用全大写；接口名常用 `Reader`、`Writer` 这种 `-er` 形式。
 - 包名一般和目录名一致，虽然不是强制，但强烈建议一致，读代码和 import 时最清楚。
+
+### Lesson 19 — 测试入门
+- Go 标准库自带 `testing` 包，不需要安装第三方测试框架；测试文件必须以 `_test.go` 结尾，例如 `main_test.go`。
+- `go test ./lesson19_testing` 会编译指定目录的普通 `.go` 文件和 `*_test.go` 文件，并自动查找 `func TestXxx(t *testing.T)` 形式的测试函数。
+- `go test -v ./lesson19_testing` 是详细模式，会打印每个测试和子测试的运行结果；`go test ./...` 会运行整个 module 下所有 package 的测试；`go test -run TestMax ./lesson19_testing` 可以只运行名字匹配 `TestMax` 的测试。
+- 同一个 package 下，`main_test.go` 可以直接调用 `main.go` 里的 `Add`、`Grade`、`Divide`、`Max`，因为它们都属于 `package main`，不需要包名前缀。
+- 同一个 package 的顶层函数、变量、常量、类型名不能重复；不同函数内部的局部变量可以同名；不同类型的方法可以同名。
+- `*testing.T` 是测试框架传入的测试控制器，常用 `t.Fatal`、`t.Fatalf`、`t.Error`、`t.Errorf`、`t.Run`、`t.Log` 报告测试状态。
+- `t.Run(name, func(t *testing.T) { ... })` 用来创建子测试；匿名函数先作为参数传给 `t.Run`，真正的函数体由 `t.Run` 在运行子测试时调用。
+- 表格驱动测试：用 `[]struct{...}{...}` 准备多组输入和期望值，再用 `for _, tt := range tests` 配合 `t.Run(tt.name, ...)` 逐组验证，类似 Python 的参数化测试。
+- `go test -v` 输出规则：`=== RUN` 表示开始运行测试或子测试；`--- PASS` 表示通过；`--- FAIL` 表示失败；缩进的 PASS/FAIL 是子测试结果；`文件名:行号` 指出失败位置；最后的 `ok/FAIL package/path 耗时` 是整个 package 的测试结果和总耗时。
+- 输出里的耗时如 `(0.00s)` 是单个测试或子测试耗时；最后 `learn_go/lesson19_testing 0.007s` 是整个 package 的测试总耗时。
+- 子测试里调用 `t.Fatalf` 只会停止当前子测试，不会阻止同一个表格里的其他子测试继续执行；如果任意子测试失败，父测试和整个 package 最终都会失败。
+- 本课 `TestMax` 中保留了一个故意失败的用例：`Max(2, 4)` 实际返回 `4`，但期望值写成 `3`，用于练习阅读失败输出；如果想让全部测试通过，把该用例的 `want` 改为 `4`。
 
 ---
 
