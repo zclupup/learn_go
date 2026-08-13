@@ -47,9 +47,10 @@
 | Lesson 13 | defer / panic / recover | `lesson13_defer_panic_recover/` | ✅ 完成 |
 | Lesson 14 | goroutine + channel 并发入门 | `lesson14_goroutine_channel/` | ✅ 完成 |
 | Lesson 15 | context 上下文与超时控制 | `lesson15_context/` | ✅ 完成 |
-| Lesson 16 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 16 | JSON 编码/解码 + struct tag | `lesson16_json/` | ✅ 完成 |
+| Lesson 17 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–15，下一课是 Lesson 16。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–16，下一课是 Lesson 17。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -102,7 +103,7 @@ git push
 
 ---
 
-## 📚 知识点总结（Lesson 01–15）
+## 📚 知识点总结（Lesson 01–16）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -234,6 +235,23 @@ git push
 - ⭐ 匿名结构体切片：`[]struct{name string; delay time.Duration}{...}` 是声明+赋值一体写法，适合临时数据。
 - ⭐ 闭包陷阱：`for` 循环里启动 goroutine 时，要把循环变量作为参数传进去，否则所有 goroutine 共享同一个变量。
 - ⭐ 并发执行顺序不固定：goroutine 启动顺序由调度器决定，但结果顺序通常按完成时间（先完成先进 channel）。
+
+### Lesson 16 — JSON 编码/解码 + struct tag
+- `encoding/json` 是 Go 标准库里处理 JSON 的包：`json.Marshal(v)` 把 Go 数据转成 JSON 字节，`json.Unmarshal(data, &v)` 把 JSON 字节解析进 Go 变量。
+- ⭐ Go 的公开/私有规则：标识符首字母大写表示导出（公开），小写表示未导出（私有）。这个规则适用于：变量、常量、函数、类型、结构体字段、方法。`encoding/json` 是另一个包，所以只能访问结构体里的大写字段；小写字段即使写了 `json` tag 也不会被处理。
+- `json.Marshal` 返回 `[]byte` 和 `error`；打印 JSON 文本时常用 `string(data)` 把字节切片转成字符串。
+- struct tag 写在结构体字段后面，例如 ``Name string `json:"name"` ``；它规定 JSON 对象里的 key 名。Marshal 时用它决定输出 key，Unmarshal 时也用它把 JSON key 匹配回结构体字段。
+- tag 只能写在 struct 字段声明上；`json` tag 是给 `encoding/json` 看的，其他包也可能读取自己的 tag，例如 `db`、`form`、`validate`。
+- `omitempty` 只影响编码方向：Marshal/MarshalIndent 时字段为零值就不输出；它不影响 Unmarshal。JSON 缺少字段时，结构体字段保持零值；JSON 里有空值时，会照样解析为空值。
+- `json:"-"` 表示忽略字段：Marshal 不输出，Unmarshal 也不会写入，适合密码、token 等不该暴露的数据。
+- `json.MarshalIndent(对象, 前缀, 缩进)` 用来格式化 JSON；第二个参数 `prefix` 是每一行前面额外加的字符串，通常传 `""`；第三个参数 `indent` 是每一级缩进，常用两个空格 `"  "`。
+- `[]byte(s)` 是 Go 的类型转换语法：`目标类型(值)`。例如 `[]byte(productJson)` 表示把 JSON 字符串转成字节切片；反过来 `string(data)` 可以把字节切片转成字符串。
+- ⭐ `json.Unmarshal(data, &v)` 第二个参数必须是指针：意思是把字节数据解析后，写入这个指针指向的内存地址，和 `fmt.Scan(&age)` 的原理类似。
+- ⭐ 为什么不能传普通变量：Go 函数参数是值传递，传 `user` 进去时函数拿到的是一份拷贝；即使函数内部给这份拷贝赋值，外面的 `user` 也不会变。传 `&user` 才是把原变量地址交给函数，函数才能把解析结果写回原变量。
+- `map[string]interface{}` 可用于结构不固定的动态 JSON；Go 1.18+ 可以写成 `map[string]any`，因为 `any` 是 `interface{}` 的别名。
+- 动态 JSON 解析到 `interface{}`/`any` 时，数字默认是 `float64`，取值后如果要当具体类型使用，通常需要类型断言。
+- JSON、map、struct 的区别：JSON 是一种文本数据格式；map 是 Go 里的键值对容器，类似 Python dict；struct 是固定字段的数据结构，适合定义稳定的请求/响应模型。
+- `fmt.Printf("%T", value)` 会打印值的类型；`main.Product` 里的 `main` 是包名 `package main`，不是文件名 `main.go`。`package main` 表示这是可执行程序包，`func main()` 是程序入口。
 
 ---
 
