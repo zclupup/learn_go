@@ -48,9 +48,10 @@
 | Lesson 14 | goroutine + channel 并发入门 | `lesson14_goroutine_channel/` | ✅ 完成 |
 | Lesson 15 | context 上下文与超时控制 | `lesson15_context/` | ✅ 完成 |
 | Lesson 16 | JSON 编码/解码 + struct tag | `lesson16_json/` | ✅ 完成 |
-| Lesson 17 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 17 | 文件读写 + JSON 文件 | `lesson17_file_json/` | ✅ 完成 |
+| Lesson 18 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–16，下一课是 Lesson 17。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–17，下一课是 Lesson 18。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -252,6 +253,17 @@ git push
 - 动态 JSON 解析到 `interface{}`/`any` 时，数字默认是 `float64`，取值后如果要当具体类型使用，通常需要类型断言。
 - JSON、map、struct 的区别：JSON 是一种文本数据格式；map 是 Go 里的键值对容器，类似 Python dict；struct 是固定字段的数据结构，适合定义稳定的请求/响应模型。
 - `fmt.Printf("%T", value)` 会打印值的类型；`main.Product` 里的 `main` 是包名 `package main`，不是文件名 `main.go`。`package main` 表示这是可执行程序包，`func main()` 是程序入口。
+
+### Lesson 17 — 文件读写 + JSON 文件
+- `os.WriteFile(path, data, perm)` 用来写文件；`data` 类型是 `[]byte`，所以写字符串时常用 `[]byte(text)` 转换。
+- `os.ReadFile(path)` 用来一次性读取整个文件，返回 `[]byte` 和 `error`；如果要当文本打印，常用 `string(data)` 转成字符串。
+- ⭐ 相对路径是相对于“运行命令时所在的目录”，不是相对于 `main.go` 所在目录。例如从项目根目录执行 `go run ./lesson17_file_json` 时，`lesson17_file_json/students.json` 指向项目根目录下的该文件；如果进入 `lesson17_file_json` 再运行 `go run main.go`，同一个相对路径会变成 `lesson17_file_json/lesson17_file_json/students.json`，可能导致找不到目录。
+- 本课推荐从项目根目录运行：`go run ./lesson17_file_json`。
+- `0644` 是文件权限：拥有者可读写，其他用户只读。学习阶段先记作“普通文本/JSON 文件常用权限”。
+- `json.MarshalIndent(students, "", "  ")` 可以把结构体切片转成格式化 JSON 字节，再配合 `os.WriteFile` 保存到 `.json` 文件。
+- `os.ReadFile` 读出 JSON 文件后，可以直接传给 `json.Unmarshal(data, &target)`，解析回结构体或结构体切片。
+- 写文件、读文件、JSON 转换都会返回 `error`；每一步都要 `if err != nil { ...; return }`，否则后续代码可能拿到空数据或错误数据继续运行。
+- 练习：新增 `Book` 结构体，把 `[]Book` 写入 `book.json`，再读回来解析成 `[]Book` 并遍历打印标题和价格。
 
 ---
 
