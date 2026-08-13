@@ -49,9 +49,10 @@
 | Lesson 15 | context 上下文与超时控制 | `lesson15_context/` | ✅ 完成 |
 | Lesson 16 | JSON 编码/解码 + struct tag | `lesson16_json/` | ✅ 完成 |
 | Lesson 17 | 文件读写 + JSON 文件 | `lesson17_file_json/` | ✅ 完成 |
-| Lesson 18 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 18 | 包 package、目录结构与模块复习 | `lesson18_package_module/` | ✅ 完成 |
+| Lesson 19 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–17，下一课是 Lesson 18。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–18，下一课是 Lesson 19。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -264,6 +265,18 @@ git push
 - `os.ReadFile` 读出 JSON 文件后，可以直接传给 `json.Unmarshal(data, &target)`，解析回结构体或结构体切片。
 - 写文件、读文件、JSON 转换都会返回 `error`；每一步都要 `if err != nil { ...; return }`，否则后续代码可能拿到空数据或错误数据继续运行。
 - 练习：新增 `Book` 结构体，把 `[]Book` 写入 `book.json`，再读回来解析成 `[]Book` 并遍历打印标题和价格。
+
+### Lesson 18 — 包 package、目录结构与模块复习
+- Go 项目可以先理解成三层：`module` 是整个项目，由 `go.mod` 里的 `module learn_go` 定义；`package` 是代码包，通常一个目录就是一个 package；`.go` 文件属于它所在目录的 package。
+- 项目内 import 路径不是相对当前文件写的，而是 `go.mod` 的 module 名 + 包目录相对项目根目录的路径。例如 `module learn_go` 加上目录 `lesson18_package_module/student`，得到 `import "learn_go/lesson18_package_module/student"`。
+- ⭐ “同一个目录下的 `.go` 文件必须写同一个 package 名”只包含直接放在该目录里的 `.go` 文件，不包含子目录；子目录是新的目录，可以是新的 package。
+- `package main` 是特殊包，表示这个目录可以编译成可执行程序；`func main()` 是程序入口。
+- 普通 package 不能自己作为程序入口，常用来放可复用代码，再由 `main` 包 import 使用。
+- 公开/私有规则仍然适用：首字母大写的类型、函数、方法、字段可以跨 package 使用；首字母小写的只能在当前 package 内部使用。
+- 小写私有函数不能被其他 package 直接调用，但可以被同 package 内部的公开函数或公开方法调用；外部再调用这个公开函数，这就是封装。
+- `func (c Course) Summary() string {}` 里的 `(c Course)` 叫方法接收者，表示 `Summary` 是 `Course` 类型的方法；`c` 类似 Python 方法里的 `self`。
+- Go 命名习惯：项目/module 常用短小、全小写路径；目录和 package 名通常短小、全小写、尽量不用下划线；文件名全小写，多个词常用下划线，如 `student_service.go`；变量/函数/方法用驼峰，如 `studentName`、`NewStudent`；常量也常用驼峰，少用全大写；接口名常用 `Reader`、`Writer` 这种 `-er` 形式。
+- 包名一般和目录名一致，虽然不是强制，但强烈建议一致，读代码和 import 时最清楚。
 
 ---
 
