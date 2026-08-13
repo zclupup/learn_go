@@ -51,9 +51,10 @@
 | Lesson 17 | 文件读写 + JSON 文件 | `lesson17_file_json/` | ✅ 完成 |
 | Lesson 18 | 包 package、目录结构与模块复习 | `lesson18_package_module/` | ✅ 完成 |
 | Lesson 19 | 测试入门 | `lesson19_testing/` | ✅ 完成 |
-| Lesson 20 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 20 | 标准库 net/http 入门 | `lesson20_http_server/` | ✅ 完成 |
+| Lesson 21 | *待定* | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–19，下一课是 Lesson 20。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–20，下一课是 Lesson 21。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -292,6 +293,20 @@ git push
 - 输出里的耗时如 `(0.00s)` 是单个测试或子测试耗时；最后 `learn_go/lesson19_testing 0.007s` 是整个 package 的测试总耗时。
 - 子测试里调用 `t.Fatalf` 只会停止当前子测试，不会阻止同一个表格里的其他子测试继续执行；如果任意子测试失败，父测试和整个 package 最终都会失败。
 - 本课 `TestMax` 中保留了一个故意失败的用例：`Max(2, 4)` 实际返回 `4`，但期望值写成 `3`，用于练习阅读失败输出；如果想让全部测试通过，把该用例的 `want` 改为 `4`。
+
+### Lesson 20 — 标准库 net/http 入门
+- `net/http` 是 Go 标准库自带的 HTTP 包；`http.HandleFunc(path, handler)` 注册路由，`http.ListenAndServe(addr, nil)` 启动服务。
+- handler 形如 `func xxxHandler(w http.ResponseWriter, r *http.Request)`：`w` 用来写 HTTP 响应，`r` 用来读取请求信息。
+- `fmt.Fprintln(w, "...")` 是写到指定目标 `w`，在 HTTP 中就是返回给客户端；`fmt.Println("...")` 是写到服务端终端。
+- `r.URL.Query().Get("name")` 读取 query 参数，例如 `/hello?name=张三`。
+- `json.NewEncoder(w).Encode(data)` 会把 `data` 编成 JSON 并直接写入 `w`；和 `json.Marshal(data)` 不同，它不会把 `[]byte` 返回给你。
+- `writeJSON` 里先设置 `Content-Type`，再 `WriteHeader(statusCode)`，最后编码 JSON；如果编码失败，只能用 `log.Println` 记到服务端终端。
+- 可以用 `make(chan int)` 这类 JSON 不支持的值模拟编码失败，触发 `log.Println("JSON 响应失败:", err)`。
+- `time.Now().Format("2006-01-02 15:04:05")` 使用 Go 的固定参考时间格式化：`2006` 年、`01` 月、`02` 日、`15` 时、`04` 分、`05` 秒。分隔符和排列可改，但不能写成 `YYYY-MM-DD`。
+- `if r.Method != http.MethodGet { ...; return }` 是方法限制。写完错误响应后要 `return`，避免后面继续执行正常响应逻辑，导致同一次请求试图写两次响应。
+- 在标准库 `net/http` 中，注册 `/` 会兜底匹配没有更具体 handler 的路径；如果想让未知路径返回 404，需要在 `/` handler 中判断 `r.URL.Path != "/"`。
+- 常用调试命令：`curl -s http://localhost:8928/products` 请求接口；`curl -s -X POST http://localhost:8928/products` 模拟非 GET；`ss -ltnp | grep :8928` 查看端口；前台服务用 `Ctrl+C` 停止。
+- 练习：新增 `/products` 接口，只允许 GET，返回 `[]Product` JSON 数组。
 
 ---
 
