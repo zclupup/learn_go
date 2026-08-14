@@ -52,9 +52,10 @@
 | Lesson 18 | 包 package、目录结构与模块复习 | `lesson18_package_module/` | ✅ 完成 |
 | Lesson 19 | 测试入门 | `lesson19_testing/` | ✅ 完成 |
 | Lesson 20 | 标准库 net/http 入门 | `lesson20_http_server/` | ✅ 完成 |
-| Lesson 21 | *待定* | *待开始* | ⬜ 下一课 |
+| Lesson 21 | 标准库 HTTP 小项目 | `lesson21_http_task_api/` | ✅ 完成 |
+| Lesson 22 | Gin 入门 | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–20，下一课是 Lesson 21。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–21，下一课是 Lesson 22。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -107,7 +108,7 @@ git push
 
 ---
 
-## 📚 知识点总结（Lesson 01–19）
+## 📚 知识点总结（Lesson 01–21）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -307,6 +308,22 @@ git push
 - 在标准库 `net/http` 中，注册 `/` 会兜底匹配没有更具体 handler 的路径；如果想让未知路径返回 404，需要在 `/` handler 中判断 `r.URL.Path != "/"`。
 - 常用调试命令：`curl -s http://localhost:8928/products` 请求接口；`curl -s -X POST http://localhost:8928/products` 模拟非 GET；`ss -ltnp | grep :8928` 查看端口；前台服务用 `Ctrl+C` 停止。
 - 练习：新增 `/products` 接口，只允许 GET，返回 `[]Product` JSON 数组。
+
+### Lesson 21 — 标准库 HTTP 小项目
+- 本课目标：用标准库 `net/http` 做一个内存版任务 API，小项目接口包括 `GET /`、`GET /tasks`、`POST /tasks`、`GET /tasks/{id}`、`PUT /tasks/{id}`、`DELETE /tasks/{id}`。
+- `http.HandleFunc(pattern, handler)` 注册路由；标准库路由会按“更具体/更长的匹配优先”选择 handler。`/tasks` 处理列表和创建，`/tasks/` 处理 `/tasks/1`、`/tasks/2` 这类详情路径；`/` 是兜底路由，所以首页 handler 里要判断 `r.URL.Path != "/"` 返回 404。
+- `tasksHandler` 里用 `switch r.Method` 区分 `GET` 和 `POST`，类似 Python/Django 里判断 `request.method`；不支持的方法返回 `http.StatusMethodNotAllowed`，也就是 405。
+- `sync.Mutex` 是 Go 进程内的“互斥锁”，不是数据库事务隔离级别。它只保证同一个 Go 进程里的多个 goroutine 在进入 `Lock()` 到 `Unlock()` 之间的代码时互斥执行。
+- 和 Django/Gunicorn 对比：Gunicorn 多 worker 是多进程，每个进程内存隔离；Go HTTP 服务通常是一个进程，内部每个请求由 goroutine 并发处理。`tasks`、`nextTaskID` 这种包级全局变量在同一个 Go 进程内被所有 goroutine 共享；如果启动多个 Go 进程，它们之间不会共享这些内存变量。
+- `Mutex` 不会自动知道自己保护哪些变量，保护范围由程序员决定：凡是在 `tasksMu.Lock()` 和 `tasksMu.Unlock()` 之间读写的共享数据，都算被这把锁保护。本课里约定 `tasksMu` 保护 `tasks` 和 `nextTaskID`。
+- 把 `tasks`、`nextTaskID`、`tasksMu` 放在同一个 `var (...)` 块里不是语法要求，而是代码组织习惯：把“共享数据”和“保护它的锁”放近一点，读代码的人更容易知道它们是一组。
+- `json.NewDecoder(r.Body).Decode(&req)` 表示从 HTTP 请求体 `r.Body` 读取 JSON，并把解析结果写入 `req`。第二个参数要传 `&req`，因为 Decode 需要修改原变量，原理类似 `fmt.Scan(&age)`。
+- `writeJSON` 有两种常见写法：`json.NewEncoder(w).Encode(data)` 是直接编码并写入响应；`json.Marshal(data)` + `w.Write(jsonData)` 是先在内存里生成 JSON 字节，成功后再写响应。后者可以在编码失败时还没写响应头之前改回 500，更方便处理错误。
+- `http.Error(w, "JSON 响应失败", http.StatusInternalServerError)` 会给前端返回一个错误响应，状态码是 500，响应体是错误文本。
+- HTTP 响应可理解为三部分：`w.Header().Set(...)` 设置响应头，`w.WriteHeader(statusCode)` 设置状态码，`w.Write(...)` 写响应体。如果不显式调用 `WriteHeader`，第一次 `Write` 时 Go 会默认发送 200。
+- ⭐ `writeJSON(...)` 只是把响应写出去，不会自动结束当前 handler 函数；如果这是错误分支或提前结束分支，后面必须紧跟 `return`，避免后续代码继续执行导致同一次请求写两次响应。
+- `strings.TrimPrefix(r.URL.Path, "/tasks/")` 用来从 `/tasks/1` 中去掉前缀得到字符串 `"1"`；`strconv.Atoi(idText)` 把字符串数字转成 `int`。如果路径是 `/tasks/abc`，转换失败，就应该返回 400。
+- `w.Write(jsonData)` 返回两个值：第一个是实际写入的字节数 `int`，第二个是写入错误 `error`。`_, _ = w.Write(jsonData)` 表示两个返回值都暂时忽略。
 
 ---
 
