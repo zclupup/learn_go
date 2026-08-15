@@ -53,9 +53,10 @@
 | Lesson 19 | 测试入门 | `lesson19_testing/` | ✅ 完成 |
 | Lesson 20 | 标准库 net/http 入门 | `lesson20_http_server/` | ✅ 完成 |
 | Lesson 21 | 标准库 HTTP 小项目 | `lesson21_http_task_api/` | ✅ 完成 |
-| Lesson 22 | Gin 入门 | *待开始* | ⬜ 下一课 |
+| Lesson 22 | Gin 入门 | `lesson22_gin_intro/` | ✅ 完成 |
+| Lesson 23 | Gin 分层小项目 | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–21，下一课是 Lesson 22。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–22，下一课是 Lesson 23。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
 
 ---
 
@@ -108,7 +109,7 @@ git push
 
 ---
 
-## 📚 知识点总结（Lesson 01–21）
+## 📚 知识点总结（Lesson 01–22）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -324,6 +325,25 @@ git push
 - ⭐ `writeJSON(...)` 只是把响应写出去，不会自动结束当前 handler 函数；如果这是错误分支或提前结束分支，后面必须紧跟 `return`，避免后续代码继续执行导致同一次请求写两次响应。
 - `strings.TrimPrefix(r.URL.Path, "/tasks/")` 用来从 `/tasks/1` 中去掉前缀得到字符串 `"1"`；`strconv.Atoi(idText)` 把字符串数字转成 `int`。如果路径是 `/tasks/abc`，转换失败，就应该返回 400。
 - `w.Write(jsonData)` 返回两个值：第一个是实际写入的字节数 `int`，第二个是写入错误 `error`。`_, _ = w.Write(jsonData)` 表示两个返回值都暂时忽略。
+
+### Lesson 22 — Gin 入门
+- `c.Query("name")` 读取 URL 问号后面的 query 参数，例如 `/hello?name=张三`；`c.Param("id")` 读取路由路径参数，例如路由 `/users/:id` 匹配 `/users/1` 时，`c.Param("id")` 得到 `"1"`。
+- Query 参数更像可选筛选条件，如分页、搜索关键字；Param 参数通常是资源标识，如用户 ID、订单 ID。
+- 记忆口诀：路径参数 Param 用来“定位资源”，Query 参数用来“筛选/修饰资源”。例如 `/users/12/orders/99?page=2&status=paid` 中，`12` 和 `99` 是路径参数，`page/status` 是 query 参数。
+- 路径参数的名字由路由定义决定：`/users/:id` 用 `c.Param("id")`，`/orders/:orderID` 用 `c.Param("orderID")`；一个 URL 里也可以有多个路径参数。
+- `*gin.Context` 是 Gin 给每次请求创建的“请求上下文对象”，handler 通过它读取请求参数、请求体、Header，也通过它写 JSON 响应、状态码。
+- `gin.Context` 的作用域是“一次 HTTP 请求”：每个请求都有自己的 `c`，请求结束后不要把 `c` 保存到全局变量或后台 goroutine 里长期使用。
+- `gin.Default()` 等于创建 Gin 引擎，并默认挂上 `Logger` 和 `Recovery` 中间件。启动时终端会打印请求日志；handler 里 panic 时，`Recovery` 会拦截 panic，避免整个服务进程崩掉。
+- 如果不想默认中间件，可以用 `gin.New()` 创建空引擎，再手动 `r.Use(gin.Logger(), gin.Recovery())`。
+- Gin 默认是 debug 模式，启动时会打印路由表、debug 提示、proxy 警告等信息；这是正常的开发模式日志。代码里不要随便 `log.Println("r:", r)` 打印整个引擎对象，否则会输出一大串内部结构。
+- Gin 模式可以通过环境变量或代码控制：终端临时用 `GIN_MODE=release go run ./lesson22_gin_intro`，代码里用 `gin.SetMode(gin.ReleaseMode)`。开发学习用 debug 方便看路由和日志；线上通常用 release 减少调试输出。
+- `r.Group("/api")` 是路由分组，表示给这一组接口统一加前缀。`api := r.Group("/api")` 后写 `api.GET("/status", ...)`，最终路径就是 `/api/status`；真实项目常用 `/api/v1`、`/admin` 这类分组。
+- `binding:"required"` 是 Gin/validator 读取的校验 tag，常配合 `c.ShouldBindJSON(&req)` 使用，表示这个字段在请求 JSON 中必填；缺少或零值时，`ShouldBindJSON` 会返回 error。
+- `json:"name"` 负责 JSON 字段名映射，`binding:"required"` 负责请求参数校验；它们写在同一个 struct 字段后面，但由不同逻辑读取。
+- Gin Logger 请求日志格式如 `[GIN] 2026/08/15 - 17:14:36 | 200 | 136.393µs | 127.0.0.1 | PUT "/users/1"`：依次表示日志来源、请求时间、HTTP 状态码、处理耗时、客户端 IP、请求方法、请求路径。
+- `c.JSON(...)` 会把 JSON 响应写给客户端，但不会自动结束当前 handler 函数；如果当前分支写完响应后不应该继续往下执行，就必须手动 `return`，避免同一次请求重复写响应或继续修改数据。
+- 本课里的 `users` 和 `nextUserID` 是包级全局变量，在同一个 Go 进程内会被所有请求 goroutine 共享；严格来说并发写入时也应该用 `sync.Mutex` 保护。教学 demo 暂时简化，真实项目要么加锁，要么把数据放进数据库。
+- Gin 只是简化 HTTP 写法，不会自动替你解决全局变量并发安全问题；共享内存是否加锁，仍然是程序员负责。
 
 ---
 
