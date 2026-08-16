@@ -54,9 +54,10 @@
 | Lesson 20 | 标准库 net/http 入门 | `lesson20_http_server/` | ✅ 完成 |
 | Lesson 21 | 标准库 HTTP 小项目 | `lesson21_http_task_api/` | ✅ 完成 |
 | Lesson 22 | Gin 入门 | `lesson22_gin_intro/` | ✅ 完成 |
-| Lesson 23 | Gin 分层小项目 | *待开始* | ⬜ 下一课 |
+| Lesson 23 | Gin 分层小项目 | `lesson23_gin_layered/` | ✅ 完成 |
+| Lesson 24 | 数据库入门：database/sql + MySQL | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–22，下一课是 Lesson 23。后续会面向 Gin 实战方向，先继续夯实 Go 基础和常用后端能力。**
+**当前进度：已完成 Lesson 01–23，下一课是 Lesson 24。后续会从内存数据走向数据库持久化，继续按“概念 → 代码 → 运行 → 练习”的节奏学习。**
 
 ---
 
@@ -109,7 +110,7 @@ git push
 
 ---
 
-## 📚 知识点总结（Lesson 01–22）
+## 📚 知识点总结（Lesson 01–23）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -344,6 +345,26 @@ git push
 - `c.JSON(...)` 会把 JSON 响应写给客户端，但不会自动结束当前 handler 函数；如果当前分支写完响应后不应该继续往下执行，就必须手动 `return`，避免同一次请求重复写响应或继续修改数据。
 - 本课里的 `users` 和 `nextUserID` 是包级全局变量，在同一个 Go 进程内会被所有请求 goroutine 共享；严格来说并发写入时也应该用 `sync.Mutex` 保护。教学 demo 暂时简化，真实项目要么加锁，要么把数据放进数据库。
 - Gin 只是简化 HTTP 写法，不会自动替你解决全局变量并发安全问题；共享内存是否加锁，仍然是程序员负责。
+
+### Lesson 23 — Gin 分层小项目
+- 分层职责口诀：`router` 管 URL 和 HTTP 方法，`handler` 管 HTTP 输入/输出，`service` 管业务逻辑，`model` 管数据结构，`main` 管组装和启动。
+- `NewUserHandler(userService)` 返回的是 `*UserHandler`，不是 `UserService`；它把 service 包在 handler 里面，让 handler 方法可以通过 `h.userService.Xxx(...)` 调业务逻辑。
+- 为什么要 handler 包 service：router 需要注册的是 Gin handler 方法，例如 `userHandler.CreateUser`；service 方法不接收 `*gin.Context`，不能直接当 HTTP handler 用。这样可以让 service 不依赖 Gin，后续更容易测试和复用。
+- service 不接收 `*gin.Context` 的好处：单元测试时可以直接构造 `CreateUserRequest` 调 `userService.CreateUser(req)`，不用伪造 HTTP 请求；以后如果换成命令行、定时任务、gRPC、消息队列消费者，也能复用同一套 service 业务逻辑。
+- `userService := service.NewUserService()` 创建的是当前 Go 进程内的一份内存数据；如果启动两个服务进程，它们各有各的 `users`，一个进程新增用户不会自动同步到另一个进程。真实项目要共享数据，需要 MySQL/Redis 等外部存储。
+- 同一个服务进程、同一个端口下，多次请求会共享同一个 `userService` 实例里的内存数据；第一次 `POST` 新增用户后，第二次 `GET` 列表能看到新增用户。重启服务后内存数据会恢复初始值。
+- `PUT /api/v1/users/:id` 同时使用路径参数和请求体：路径里的 `:id` 定位要修改哪个用户，请求 JSON 里的 `name/age` 提供要改成什么值。
+- `UpdateUser(c *gin.Context)` 里先用 `c.Param("id")` 取路径参数，再用 `c.ShouldBindJSON(&req)` 读取请求体，最后调用 `service.UpdateUser(id, req)` 执行业务更新。
+- Go import 后默认用“包名”访问，不一定是路径最后一段，但通常包名和目录名一致。如果两个导入包的包名相同，需要给其中一个起别名，例如 `userService "learn_go/xxx/service"`，然后用 `userService.NewUserService()` 访问。
+- `main()` 启动时只创建一次 `userService`、`userHandler` 和 Gin engine；后续每个请求进来时，Gin 按路由匹配到对应 handler，handler 复用启动时注入的同一个 service 实例。
+- 错误在 service 定义、HTTP 状态码在 handler 决定：service 最清楚业务失败原因（如用户不存在、name 为空），handler 负责把业务错误翻译成 HTTP 响应（如 404、400、500）。
+- `ListUsers` 里用 `make + copy` 返回切片副本，是为了避免外部拿到 service 内部 `s.users` 的底层数组后直接修改内部数据；这叫保护内部状态/封装。
+- 切片本身只是一个描述结构（指向底层数组的指针、长度、容量）。直接 `return s.users` 会把“能访问同一底层数组的切片”交出去；copy 后外部拿到的是独立底层数组，更安全。
+- service 层单元测试可以直接 `userService := NewUserService()`，再调用 `CreateUser/GetUser/DeleteUser` 等方法；这正是“业务逻辑不依赖 Gin”的好处，不需要启动 HTTP 服务也能测。
+- `_test.go` 文件如果写 `package service`，就和被测代码属于同一个包，可以直接访问 `ErrUserNotFound`、`ErrInvalidName` 这类同包变量；如果写 `package service_test`，就更像外部用户，只能访问大写导出的标识符。
+- 判断错误时，`errors.Is(err, ErrUserNotFound)` 比 `err == ErrUserNotFound` 更稳。现在两者都能工作，但以后如果错误被 `fmt.Errorf("xxx: %w", ErrUserNotFound)` 包一层，`errors.Is` 仍然能识别出来。
+- 测试函数名要以 `Test` 开头，参数固定是 `t *testing.T`；文件名必须以 `_test.go` 结尾，`go test` 才会自动识别并运行。
+- 局部变量通常用小写开头，例如 `userService`；大写开头一般表示导出标识符，更多用于类型、函数、结构体字段等需要给其他包访问的名字。
 
 ---
 
