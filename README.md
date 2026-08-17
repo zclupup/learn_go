@@ -55,9 +55,10 @@
 | Lesson 21 | 标准库 HTTP 小项目 | `lesson21_http_task_api/` | ✅ 完成 |
 | Lesson 22 | Gin 入门 | `lesson22_gin_intro/` | ✅ 完成 |
 | Lesson 23 | Gin 分层小项目 | `lesson23_gin_layered/` | ✅ 完成 |
-| Lesson 24 | 数据库入门：database/sql + MySQL | *待开始* | ⬜ 下一课 |
+| Lesson 24 | 数据库入门：database/sql + MySQL | `lesson24_database_sql/` | ✅ 完成 |
+| Lesson 25 | GORM 入门：模型与 CRUD | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–23，下一课是 Lesson 24。后续会从内存数据走向数据库持久化，继续按“概念 → 代码 → 运行 → 练习”的节奏学习。**
+**当前进度：已完成 Lesson 01–24，下一课是 Lesson 25。已经从内存数据走到 MySQL 持久化入口，后续会学习 GORM，并继续对照 issue_api 的 data/model/repo 分层。**
 
 ---
 
@@ -110,7 +111,7 @@ git push
 
 ---
 
-## 📚 知识点总结（Lesson 01–23）
+## 📚 知识点总结（Lesson 01–24）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -365,6 +366,20 @@ git push
 - 判断错误时，`errors.Is(err, ErrUserNotFound)` 比 `err == ErrUserNotFound` 更稳。现在两者都能工作，但以后如果错误被 `fmt.Errorf("xxx: %w", ErrUserNotFound)` 包一层，`errors.Is` 仍然能识别出来。
 - 测试函数名要以 `Test` 开头，参数固定是 `t *testing.T`；文件名必须以 `_test.go` 结尾，`go test` 才会自动识别并运行。
 - 局部变量通常用小写开头，例如 `userService`；大写开头一般表示导出标识符，更多用于类型、函数、结构体字段等需要给其他包访问的名字。
+
+### Lesson 24 — 数据库入门：database/sql + MySQL
+- `database/sql` 是 Go 标准库提供的数据库抽象层；它本身不直接懂 MySQL，需要通过空白导入 `_ "github.com/go-sql-driver/mysql"` 注册 MySQL driver。
+- `sql.Open("mysql", dsn)` 主要是创建数据库连接池对象，不一定立刻真正连库；`db.PingContext(ctx)` 才是常用的“确认数据库能连上”的检查。
+- DSN 是数据库连接字符串，里面通常包含用户名、密码、地址、端口、数据库名和参数。本课用环境变量 `LEARN_GO_MYSQL_DSN` 保存 DSN，避免把密码写进代码和 git。
+- `context.WithTimeout(...)` 可以给数据库操作加超时，避免网络或数据库卡住时程序一直等待。真实后端里，请求传下来的 context 常会一路传到数据库层。
+- `db.ExecContext(ctx, sql, args...)` 用来执行不需要返回多行结果的 SQL，例如 `CREATE TABLE`、`INSERT`、`UPDATE`、`DELETE`。
+- SQL 里的 `?` 是占位符，参数通过 `ExecContext/QueryContext` 后面的 `args...` 传入；不要自己拼接用户输入到 SQL 字符串里，否则容易产生 SQL 注入风险。
+- `result.LastInsertId()` 可以拿到自增主键插入后的 ID；这类似创建一条记录后数据库告诉你新记录的编号。
+- `db.QueryContext(...)` 用来查询多行数据，返回 `*sql.Rows`；用完必须 `defer rows.Close()` 释放资源。
+- `for rows.Next()` 一行一行读取查询结果，`rows.Scan(&student.ID, &student.Name, ...)` 把当前行的列写入结构体字段。这里必须传指针，因为 Scan 要修改变量。
+- 循环结束后还要检查 `rows.Err()`，因为遍历过程中也可能发生错误；这一步容易漏，但真实项目里很重要。
+- 本课仍然保留了小测试：空名字直接返回错误，不需要真实数据库也能测。这体现了一个原则：能在进入外部依赖前验证的业务规则，应该尽量单独测。
+- 和 `issue_api` 的关系：后续看 `internal/data` 和 GORM 时，可以把 GORM 理解成在这些底层动作之上封装了模型映射、CRUD、事务和查询构造。
 
 ---
 
