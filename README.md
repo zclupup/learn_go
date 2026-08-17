@@ -56,9 +56,88 @@
 | Lesson 22 | Gin 入门 | `lesson22_gin_intro/` | ✅ 完成 |
 | Lesson 23 | Gin 分层小项目 | `lesson23_gin_layered/` | ✅ 完成 |
 | Lesson 24 | 数据库入门：database/sql + MySQL | `lesson24_database_sql/` | ✅ 完成 |
-| Lesson 25 | GORM 入门：模型与 CRUD | *待开始* | ⬜ 下一课 |
+| Lesson 25 | interface + repo 模式 | *待开始* | ⬜ 下一课 |
+| Lesson 26 | GORM 入门：连接、模型、CRUD | *待开始* | ⬜ 后续 |
 
-**当前进度：已完成 Lesson 01–24，下一课是 Lesson 25。已经从内存数据走到 MySQL 持久化入口，后续会学习 GORM，并继续对照 issue_api 的 data/model/repo 分层。**
+**当前进度：已完成 Lesson 01–24，下一课是 Lesson 25。已经从内存数据走到 MySQL 持久化入口，后续先补 interface + repo 模式，再学习 GORM，并继续对照 issue_api 的 service/biz/data/repo 分层。**
+
+---
+
+## 🧭 issue_api 中间路线（换电脑后优先看）
+
+当前 `learn_go` 和 `issue_api` 在同一个 VS Code 工作区。后续学习采用“中间路线”：**课程内容要明显向 `issue_api` 靠拢，但不要完全跳进大项目，也不要完全脱离大项目**。
+
+学习主线按“服务端基础能力”调整，目标是为看懂 `issue_api` 铺路。每一课都先用小项目掌握底层概念，再少量对照 `issue_api` 中的真实文件。
+
+### 后续课程路线
+
+| 课程 | 主题 | 对应 issue_api 能力 |
+|------|------|--------------------|
+| Lesson 21 | 标准库 HTTP 小项目 | 理解 HTTP 请求入口和 handler |
+| Lesson 22 | HTTP 请求体、状态码、统一响应封装 | 对照 `internal/service/service.go` 的统一返回 |
+| Lesson 23 | context 在 HTTP 请求中的用法 | 理解 service/biz 方法参数里的 `context` |
+| Lesson 24 | 简单分层：service / biz / data | 对照 `internal/service`、`internal/biz`、`internal/data` |
+| Lesson 25 | interface + repo 模式 | 对照 `internal/biz/repo` |
+| Lesson 26 | GORM 入门：连接、模型、CRUD | 对照 `internal/model`、`internal/data` |
+| Lesson 27 | 配置文件读取：yaml + struct | 对照 `configs`、`internal/conf` |
+| Lesson 28 | 依赖注入思想：手写 NewXxx 组装对象 | 理解对象如何被组装起来 |
+| Lesson 29 | Wire 入门 | 对照 `cmd/issue_api/wire.go`、`wire_gen.go` |
+| Lesson 30 | Gin 入门 | 对照 `internal/server/gin.go` |
+| Lesson 31 | Gin 分层小项目 | 串起 route -> service -> biz -> repo -> data |
+| Lesson 32 | goroutine + ticker/cron 后台任务 | 对照 `internal/server/cronjob.go` |
+| Lesson 33 | Redis / 外部 HTTP / Jira 这类外部依赖的调用模式 | 理解 data/tool 层如何调用外部系统 |
+| Lesson 34 | 回到 issue_api：从一个真实接口完整追链路 | 从路由追到数据表和错误返回 |
+
+### 每课固定对照方式
+
+每一课结束后，都追加一个“真实项目对照”小环节：
+
+- 本课学了什么；
+- `issue_api` 里哪里用到了；
+- 只看 1-2 个真实文件；
+- 先建立映射，不急着改业务代码。
+
+例如学完 HTTP 小项目后，只看：
+
+```text
+issue_api/internal/server/gin.go
+issue_api/internal/service/service.go
+```
+
+只关注路由注册、handler 入口、请求参数绑定、统一响应格式，不看复杂业务细节。
+
+学完分层和 repo 后，再对照：
+
+```text
+issue_api/internal/service/task.go
+issue_api/internal/biz/task/task.go
+issue_api/internal/biz/repo/task.go
+issue_api/internal/data/issue_tracking_task.go
+```
+
+学完 GORM 后，再看 `internal/model` 和 `internal/data`；学完 Wire 后，再看：
+
+```text
+issue_api/cmd/issue_api/wire.go
+issue_api/cmd/issue_api/wire_gen.go
+```
+
+### 追 issue_api 代码时的问题清单
+
+看真实接口时，不要求一开始读懂所有业务，只练习追这条链路：
+
+- 路由在哪里注册？
+- 请求参数怎么绑定？
+- 调用哪个 service handler？
+- service 调哪个 usecase / biz？
+- usecase 调哪个 repo？
+- repo 接口在哪里定义？
+- data 层怎么实现这个 repo？
+- 最终查哪张表或调用哪个外部系统？
+- 错误怎么包装并返回给前端？
+- 有没有 goroutine、cron、Redis 队列这类异步处理？
+
+重要原则：现在不要直接一口气学 Kratos、Wire、GORM、Gin 全套。先用标准库和小项目把底层模型搭起来：函数、结构体、接口、方法、context、HTTP handler、JSON、数据库 CRUD。框架只是把这些东西组织起来。
 
 ---
 
