@@ -25,6 +25,9 @@
 7. **触发口令**：我可能会用这些话触发上述更新，含义相同——
    "更新进度" / "记录进度" / "总结一下这节课" / "写入 README"。
    看到类似口令，或每完成一课，都按第 6 条执行。
+8. **每课记录我的疑问（重要）**：我学习时会问很多"为什么"，这些是我的真实盲点。
+   每节课结束后，把我提出的疑问和你的回答重点，归纳成简明列点，写进该课「知识点总结」
+   后面的 **"💬 本课疑问与答疑"** 小节。以后每一课都要这样做，不要只写知识点、漏掉答疑。
 
 ---
 
@@ -473,6 +476,38 @@ git push
 - `context.Context` 继续从 usecase 传到 repo，和真实后端请求链路一致：请求进来后，context 会一路传到数据库或外部调用层。
 - 对照 `issue_api`：`internal/biz/repo/pack.go` 里的 `PackRepo` 就像本课的 `TaskRepo`；`internal/data/pack.go` 里的 `packRepo` 就像本课的 `memoryTaskRepo`；`NewPackRepo(...) repo.PackRepo` 就像本课的 `NewMemoryTaskRepo() repo.TaskRepo`。
 - 看真实项目时先抓链路，不急着看业务细节：service handler 调 biz/usecase，biz/usecase 调 repo 接口，data 层实现 repo 接口，最后才是 GORM/MySQL 或其他外部依赖。
+
+#### 💬 本课疑问与答疑
+
+- **为什么 `NewMemoryTaskRepo()` 返回 `repo.TaskRepo`，但实际 return 的是 `*memoryTaskRepo` 指针，不矛盾吗？**
+  不矛盾。接口不是具体对象，而是一组方法要求。`*memoryTaskRepo` 拥有 `Create/GetByID/List/MarkDone` 四个方法，满足 `repo.TaskRepo`，所以能作为接口返回。目的是对上层隐藏具体实现，只暴露接口能力。
+
+- **`&memoryTaskRepo{...}` 里没写 `mu`，那 `mu` 存在吗？**
+  存在。结构体未赋值的字段会自动取零值。`sync.Mutex` 的零值就是"未加锁、可直接使用"的状态，等价于写 `mu: sync.Mutex{}`。int→0、string→""、bool→false、slice→nil、Mutex→可用未加锁，都是零值。
+
+- **为什么 `NewTaskUseCase()` 返回 `*TaskUseCase` 而不是 `TaskUseCase`？**
+  因为 `return &TaskUseCase{...}` 返回的是地址，类型就是 `*TaskUseCase`，所以签名必须写 `*TaskUseCase`。若写 `TaskUseCase`，`return` 就要去掉 `&` 写 `return TaskUseCase{...}`。返回指针能避免拷贝整个结构体、语义更清楚，也符合后端"构造函数返回对象地址"的习惯。
+
+- **为什么 `NewMemoryTaskRepo` 不带 `*` 也能 return 地址，`NewTaskUseCase` 却要写 `*`？**
+  关键区别：`NewMemoryTaskRepo` 返回的是**接口** `repo.TaskRepo`，接口能装下满足它的 `*memoryTaskRepo`；`NewTaskUseCase` 返回的是**指针类型** `*TaskUseCase`。两者不是同一件事。接口靠"方法够不够"判断能否接住某个值，指针类型则直接要求右边是地址。
+
+- **为什么接口能接住 `*memoryTaskRepo`？**
+  因为接口只问"这个值的实际类型方法够不够"。本课四个方法都是指针接收者 `func (r *memoryTaskRepo) ...`，所以只有 `*memoryTaskRepo` 实现了接口。方法接收者规则：值接收者 `(r T)` → `T` 和 `*T` 都实现；指针接收者 `(r *T)` → 只有 `*T` 实现。
+
+- **biz 是不是 handler？data 是不是 service？repo 是不是 service 的上层接口？**
+  不完全对。更准确是：`handler` 负责 HTTP 输入输出，`biz` 更像 Lesson23 里的 service（业务逻辑），`repo` 是 biz 与 data 之间的接口合同，`data` 才是真正访问数据库/Redis/外部接口的实现。`issue_api` 里 `internal/service` 反而更像 handler/controller 层，`internal/biz` 才是业务 usecase。
+
+- **为什么 data 和 biz 都要写 New 方法？**
+  因为它们创建的是两层不同对象：`data.NewMemoryTaskRepo()` 造"数据仓库"，`biz.NewTaskUseCase(taskRepo)` 造"业务对象"并把仓库塞进去。之所以不在 usecase 内部直接 new repo，是为了让 biz 只依赖接口，换掉 data 实现时 biz 不用改。
+
+- **为什么 data 层每个方法开头都写 `if err := ctx.Err(); err != nil { return ... }`？**
+  这是"开工前检查"。真实项目里 data 层可能是查 MySQL/Redis/调外部接口，可能慢或卡住。检查 `ctx.Err()` 能感知"请求是否已取消或超时"，超时了就直接返回，不再继续操作。
+
+- **`main` 里为什么写 `context.WithTimeout(..., 3*time.Second)`？从请求到响应必须 3 秒内完成吗？**
+  这是给本次业务链路设置一个"最多 3 秒"的生命周期，3 秒是教学里给的宽松值，不是神奇数字。真实 HTTP 场景中，请求 ctx 常来自 `c.Request.Context()`，超时后 ctx 会标记取消，但 Go 不会自动杀代码，需要代码检查 ctx 或把 ctx 传给数据库库来响应。`defer cancel()` 用于提前结束时释放资源。
+
+- **为什么只在 data 层检查 ctx，biz/main 不检查？**
+  因为本课里最可能慢、卡、需要取消的是 data 层。biz 层主要是快速业务判断，所以主要把 ctx 往下传。真实项目中若 biz 有长循环或连续外部调用，也应检查 ctx；这不是"只能在 data 层查"。
 
 ### Lesson 26 — GORM 入门：连接、模型、CRUD
 - GORM 是 Go 常用 ORM，可以把结构体和数据库表建立映射。本课用 SQLite 内存数据库是为了不用安装 MySQL 也能跑通；真实项目 `issue_api` 里通常是 GORM + MySQL。
