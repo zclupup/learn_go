@@ -61,9 +61,10 @@
 | Lesson 24 | 数据库入门：database/sql + MySQL | `lesson24_database_sql/` | ✅ 完成 |
 | Lesson 25 | interface + repo 模式 | `lesson25_repo_pattern/` | ✅ 完成 |
 | Lesson 26 | GORM 入门：连接、模型、CRUD | `lesson26_gorm_intro/` | ✅ 完成 |
-| Lesson 27 | 配置文件读取：yaml + struct | *待开始* | ⬜ 下一课 |
+| Lesson 27 | 配置文件读取：yaml + struct | `lesson27_yaml_config/` | ✅ 完成 |
+| Lesson 28 | 依赖注入思想：手写 NewXxx 组装对象 | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–26，下一课是 Lesson 27。已经把 repo 接口背后的 data 实现从内存切到 GORM，下一步学习 yaml 配置读取，对照 issue_api 的 configs 和 internal/conf。**
+**当前进度：已完成 Lesson 01–27，下一课是 Lesson 28。已经掌握 yaml 配置读取，下一步学习依赖注入思想（手写 NewXxx 组装对象），为理解 issue_api 的 wire 做铺垫。**
 
 ---
 
@@ -549,6 +550,32 @@ git push
 
 - **为什么把 `gorm.ErrRecordNotFound` 转成 `repo.ErrTaskNotFound`？**
   因为 biz 层只依赖 `repo.TaskRepo` 接口，不该知道 GORM 的错误。data 层负责把 GORM 错误翻译成 repo 层自己的错误，避免 biz 为了判断错误而 import GORM，从而保持分层干净。
+
+### Lesson 27 — 配置文件读取：yaml + struct
+- yaml 是一种可读的配置格式，用缩进表示层级。后端常把数据库地址、Redis 地址、项目参数等写进 yaml，而不是硬编码在代码里，这样改配置不用改代码、不用重新编译。
+- 把 yaml 解析到结构体的核心是 `yaml.Unmarshal(data, &config)`：第一个参数是 yaml 文本的字节，第二个参数是要写入的结构体指针。
+- 结构体字段用 `yaml:"..."` tag 指定对应 yaml 里的键名。例如 `Addr string \`yaml:"addr"\`` 表示读 yaml 里的 `addr` 字段。
+- 嵌套结构体对应 yaml 的层级缩进：顶层 `Config` 有 `server/data/project` 三个字段，`ServerConfig` 里又有 `http/env`，一层套一层。
+- 本课结构对齐 `issue_api`：`configs/config.yaml` 对应本课的 `config.yaml`，`conf.Bootstrap` 对应顶层 `Config` 结构体，`server/data/project` 对应嵌套子结构体。
+- `issue_api` 用 Kratos 的 config 库 + protobuf 生成 `conf.Bootstrap` 结构体；本课用 `gopkg.in/yaml.v3`，但核心思想一样：yaml 文本 -> 结构体字段。
+- 用 `flag.String("conf", "config.yaml", ...)` 指定配置路径，和 `issue_api` 里 `-conf` 参数的用法一致。`flag.Parse()` 之后才能读到参数值。
+- ⭐ 相对路径陷阱：`os.ReadFile("config.yaml")` 里的路径是相对"运行命令时所在的目录"，不是相对 main.go 所在目录。从项目根目录运行要用 `-conf lesson27_yaml_config/config.yaml`。
+
+#### 💬 本课疑问与答疑
+
+- **为什么要用 yaml 配置文件？**
+  把配置和代码分离。数据库密码、端口、环境参数等会随部署环境变化，写进 yaml 后改配置不需要改代码、不需要重新编译。密码等敏感信息也不该硬编码进代码并提交到 git。
+
+- **`yaml.Unmarshal` 和之前学的 `json.Unmarshal` 是什么关系？**
+  原理完全一样，都是"把一种文本格式解析进结构体"，只是格式从 JSON 换成 yaml。JSON 用 `{}` 和 `[]`，yaml 用缩进和 `key: value`。两者都需要传指针 `&config`，都靠 tag 指定字段名映射。
+
+- **`yaml:"addr"` 这个 tag 和之前的 `json:"addr"`、`gorm:"column:addr"` 有什么区别？**
+  都是 struct tag，但给不同的库读：`yaml` tag 给 yaml 库读，`json` tag 给 encoding/json 读，`gorm` tag 给 GORM 读。同一个字段可以同时有多个 tag，各管各的，互不影响。
+
+- **`flag.String("conf", "config.yaml", ...)` 是什么意思？**
+  定义一个命令行参数叫 `conf`，默认值是 `"config.yaml"`，第三个字符串是帮助说明。`flag.Parse()` 会解析命令行参数，之后用 `*conf` 拿到值（注意是指针）。这样运行时可以用 `-conf 路径` 覆盖默认值。
+
+---
 
 ---
 

@@ -1,0 +1,19 @@
+# 这是 Lesson27 的配置文件
+# 结构对齐 issue_api 的 configs/config.yaml（Bootstrap -> Server/Data/Project）
+
+server:
+  http:
+    addr: "0.0.0.0:8080"
+    timeout: "3s"
+  env: "local"
+
+data:
+  mysql:
+    dsn: "user:pass@tcp(127.0.0.1:3306)/learn_go?charset=utf8mb4"
+  redis:
+    address: "127.0.0.1:6379"
+    db: 0
+
+project:
+  project_name: "psd"
+  mode: "local"
