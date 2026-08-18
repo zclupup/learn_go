@@ -57,9 +57,10 @@
 | Lesson 23 | Gin 分层小项目 | `lesson23_gin_layered/` | ✅ 完成 |
 | Lesson 24 | 数据库入门：database/sql + MySQL | `lesson24_database_sql/` | ✅ 完成 |
 | Lesson 25 | interface + repo 模式 | `lesson25_repo_pattern/` | ✅ 完成 |
-| Lesson 26 | GORM 入门：连接、模型、CRUD | *待开始* | ⬜ 下一课 |
+| Lesson 26 | GORM 入门：连接、模型、CRUD | `lesson26_gorm_intro/` | ✅ 完成 |
+| Lesson 27 | 配置文件读取：yaml + struct | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–25，下一课是 Lesson 26。已经补上 interface + repo 模式，下一步学习 GORM，把 repo 接口背后的 data 实现从内存切到数据库模型和 CRUD。**
+**当前进度：已完成 Lesson 01–26，下一课是 Lesson 27。已经把 repo 接口背后的 data 实现从内存切到 GORM，下一步学习 yaml 配置读取，对照 issue_api 的 configs 和 internal/conf。**
 
 ---
 
@@ -190,7 +191,7 @@ git push
 
 ---
 
-## 📚 知识点总结（Lesson 01–25）
+## 📚 知识点总结（Lesson 01–26）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -472,6 +473,21 @@ git push
 - `context.Context` 继续从 usecase 传到 repo，和真实后端请求链路一致：请求进来后，context 会一路传到数据库或外部调用层。
 - 对照 `issue_api`：`internal/biz/repo/pack.go` 里的 `PackRepo` 就像本课的 `TaskRepo`；`internal/data/pack.go` 里的 `packRepo` 就像本课的 `memoryTaskRepo`；`NewPackRepo(...) repo.PackRepo` 就像本课的 `NewMemoryTaskRepo() repo.TaskRepo`。
 - 看真实项目时先抓链路，不急着看业务细节：service handler 调 biz/usecase，biz/usecase 调 repo 接口，data 层实现 repo 接口，最后才是 GORM/MySQL 或其他外部依赖。
+
+### Lesson 26 — GORM 入门：连接、模型、CRUD
+- GORM 是 Go 常用 ORM，可以把结构体和数据库表建立映射。本课用 SQLite 内存数据库是为了不用安装 MySQL 也能跑通；真实项目 `issue_api` 里通常是 GORM + MySQL。
+- `model.Task` 上的 `gorm` tag 描述字段映射，例如 `gorm:"column:title;not null"` 表示这个字段对应数据库列 `title`，并且不能为空。
+- `TableName() string` 可以明确指定表名。本课返回 `lesson26_tasks`；`issue_api/internal/model/pack.go` 里 `func (Pack) TableName() string { return "pack" }` 是同一种写法。
+- `gorm.Open(sqlite.Open(...), &gorm.Config{})` 是创建 GORM 数据库对象；在 MySQL 场景中会换成 MySQL driver，但后面的 `Create/First/Find/Update` 调用习惯基本一致。
+- `AutoMigrate(&model.Task{})` 会根据结构体自动创建或调整表结构。学习项目里很方便；生产项目中是否自动迁移要看团队规范，不能随便改生产表结构。
+- `db.WithContext(ctx)` 把请求/任务的 context 传给 GORM，让数据库操作能感知取消或超时；这对应真实后端里 context 一路传到 data 层的习惯。
+- `Create(task)` 会插入记录，并把自增 ID 写回 `task.ID`。所以本课 repo 接口的 `Create` 接收 `*model.Task`，方便 GORM 写回 ID。
+- `Where("id = ?", id).First(&task)` 查询单条记录；如果没找到，GORM 返回 `gorm.ErrRecordNotFound`。data 层把它转换成自己的 `repo.ErrTaskNotFound`，让 biz 不直接依赖 GORM 错误。
+- `Find(&tasks)` 查询多条记录，常配合 `Order/Where/Limit` 等链式方法使用。
+- `Model(task).Update("done", true)` 更新单个字段；真实项目里也常见 `Updates(map[string]interface{}{...})` 批量更新字段。
+- Lesson26 延续 Lesson25 的依赖方向：`biz` 仍然只依赖 `repo.TaskRepo`，不知道底层是 GORM；`data.gormTaskRepo` 才 import GORM 并实现接口。
+- 对照 `issue_api`：`internal/model` 负责结构体和表字段映射，`internal/data` 里常见 `db.Table(...).Where(...).First/Find/Create/Updates`，`internal/biz/repo` 负责定义上层需要的数据能力。
+- 测试里使用 SQLite 内存数据库验证 CRUD，比依赖外部 MySQL 更轻；同时仍然能练习 GORM 的真实调用方式。
 
 ---
 
