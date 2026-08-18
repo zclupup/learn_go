@@ -56,10 +56,10 @@
 | Lesson 22 | Gin 入门 | `lesson22_gin_intro/` | ✅ 完成 |
 | Lesson 23 | Gin 分层小项目 | `lesson23_gin_layered/` | ✅ 完成 |
 | Lesson 24 | 数据库入门：database/sql + MySQL | `lesson24_database_sql/` | ✅ 完成 |
-| Lesson 25 | interface + repo 模式 | *待开始* | ⬜ 下一课 |
-| Lesson 26 | GORM 入门：连接、模型、CRUD | *待开始* | ⬜ 后续 |
+| Lesson 25 | interface + repo 模式 | `lesson25_repo_pattern/` | ✅ 完成 |
+| Lesson 26 | GORM 入门：连接、模型、CRUD | *待开始* | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–24，下一课是 Lesson 25。已经从内存数据走到 MySQL 持久化入口，后续先补 interface + repo 模式，再学习 GORM，并继续对照 issue_api 的 service/biz/data/repo 分层。**
+**当前进度：已完成 Lesson 01–25，下一课是 Lesson 26。已经补上 interface + repo 模式，下一步学习 GORM，把 repo 接口背后的 data 实现从内存切到数据库模型和 CRUD。**
 
 ---
 
@@ -190,7 +190,7 @@ git push
 
 ---
 
-## 📚 知识点总结（Lesson 01–24）
+## 📚 知识点总结（Lesson 01–25）
 
 ### Lesson 01 — 变量声明
 - 三种声明方式：
@@ -459,6 +459,19 @@ git push
 - 循环结束后还要检查 `rows.Err()`，因为遍历过程中也可能发生错误；这一步容易漏，但真实项目里很重要。
 - 本课仍然保留了小测试：空名字直接返回错误，不需要真实数据库也能测。这体现了一个原则：能在进入外部依赖前验证的业务规则，应该尽量单独测。
 - 和 `issue_api` 的关系：后续看 `internal/data` 和 GORM 时，可以把 GORM 理解成在这些底层动作之上封装了模型映射、CRUD、事务和查询构造。
+
+### Lesson 25 — interface + repo 模式
+- repo 模式的核心是“业务层只依赖接口，不依赖具体数据实现”。本课里 `repo.TaskRepo` 定义 biz 需要的数据能力，`data.memoryTaskRepo` 负责真正保存和查询数据。
+- `type TaskRepo interface { ... }` 只写方法签名，不写具体逻辑；它像一份合同：谁拥有这些方法，谁就能被当成 `TaskRepo` 使用。
+- `memoryTaskRepo` 是小写类型，外部不能直接依赖它；`NewMemoryTaskRepo()` 返回 `repo.TaskRepo` 接口，让外部只知道“这是一个任务仓库”，不知道它内部是内存实现。
+- `TaskUseCase` 里保存的是 `taskRepo repo.TaskRepo`，所以 biz 层可以调用 `Create/List/MarkDone`，但不关心底层是 slice、MySQL、Redis 还是外部 HTTP。
+- `main` 的职责是组装对象：先 `data.NewMemoryTaskRepo()`，再 `biz.NewTaskUseCase(taskRepo)`。这就是依赖注入的最小版本：把依赖从外面传进去，而不是在 usecase 内部自己创建。
+- 依赖方向要记住：`biz -> repo 接口`，`data -> repo 接口并实现它`，`main -> 组装 biz 和 data`。不要让 biz 直接 import data，否则业务层会被具体存储方式绑死。
+- 测试里用 `fakeTaskRepo` 实现同一个 `repo.TaskRepo` 接口，就能在不启动数据库、不启动 HTTP 服务的情况下测试 `TaskUseCase`。这是真实项目里 repo 接口很重要的原因之一。
+- 空标题校验发生在 `CreateTask` 里，校验失败时不会调用 repo；测试通过 `fakeRepo.created` 验证这一点，说明 biz 规则可以独立于 data 实现被测试。
+- `context.Context` 继续从 usecase 传到 repo，和真实后端请求链路一致：请求进来后，context 会一路传到数据库或外部调用层。
+- 对照 `issue_api`：`internal/biz/repo/pack.go` 里的 `PackRepo` 就像本课的 `TaskRepo`；`internal/data/pack.go` 里的 `packRepo` 就像本课的 `memoryTaskRepo`；`NewPackRepo(...) repo.PackRepo` 就像本课的 `NewMemoryTaskRepo() repo.TaskRepo`。
+- 看真实项目时先抓链路，不急着看业务细节：service handler 调 biz/usecase，biz/usecase 调 repo 接口，data 层实现 repo 接口，最后才是 GORM/MySQL 或其他外部依赖。
 
 ---
 
