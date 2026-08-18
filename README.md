@@ -524,6 +524,32 @@ git push
 - 对照 `issue_api`：`internal/model` 负责结构体和表字段映射，`internal/data` 里常见 `db.Table(...).Where(...).First/Find/Create/Updates`，`internal/biz/repo` 负责定义上层需要的数据能力。
 - 测试里使用 SQLite 内存数据库验证 CRUD，比依赖外部 MySQL 更轻；同时仍然能练习 GORM 的真实调用方式。
 
+#### 💬 本课疑问与答疑
+
+- **GORM 是什么？**
+  GORM 是一个 ORM（Object-Relational Mapping，对象关系映射）框架。它让你用"操作 Go 结构体"的方式去"操作数据库表"，自动完成结构体与表、字段与列的映射，以及 CRUD 的 SQL 生成，省去手写 SQL 和手动 `Scan`。对比 Lesson24 手写 `SELECT/Scan`，GORM 的 `First(&task)` 会自动把结果填进结构体。
+
+- **`gorm` tag 和 `json` tag 的区别？**
+  `gorm:"..."` 是给 GORM 看的，管数据库映射（列名、主键、非空等）；`json:"..."` 是给 `encoding/json` 看的，管 JSON 字段名。两个 tag 各管各的，互不干扰。
+
+- **为什么 `List` 返回 `[]model.Task`，其他方法返回 `*model.Task`？**
+  单个对象用指针是为了能用 `nil` 表达"不存在"（如 `GetByID` 找不到返回 `nil`），以及让 GORM 写回自增 ID（`Create` 需要指针才能改 `task.ID`）。列表不需要 `nil` 语义，空切片 `[]model.Task{}` 天然表达"没有数据"，所以用值切片，遍历也更简单。
+
+- **`gorm.Open(sqlite.Open("file:lesson26?mode=memory&cache=shared"), &gorm.Config{})` 是什么意思？**
+  拆成两层：外层 `gorm.Open(拨号器, 配置)` 是 GORM 打开数据库的统一入口，返回 `*gorm.DB`；内层 `sqlite.Open("...")` 是 SQLite 的拨号器，告诉 GORM 用 SQLite。字符串里 `mode=memory` 表示用内存数据库（不写磁盘），`cache=shared` 表示多连接共享同一份内存，程序退出数据就没了。`&gorm.Config{}` 是空配置，用默认值。换成 MySQL 就是 `gorm.Open(mysql.Open("user:pass@tcp(...)/db"), &gorm.Config{})`。
+
+- **`AutoMigrate(&model.Task{})` 是什么意思？**
+  根据 `Task` 结构体和它的 `gorm` tag 自动创建/调整数据库表。它读取结构体字段和 tag，生成对应的建表语句；表不存在就建，结构有变化就尝试调整。传 `&model.Task{}` 是为了让 GORM 用反射拿到类型信息。注意生产环境不能随便 AutoMigrate，避免意外改动线上表结构。
+
+- **`db.WithContext(ctx)` 是什么？**
+  把数据库操作和 context 绑定，让 GORM 在请求取消或超时时能及时停止。这是真实后端里 context 一路传到 data 层的标准做法，固定模式就是 `db.WithContext(ctx).XXX(...).Error`。
+
+- **`.Error` 是什么？**
+  GORM 的链式调用返回的是 `*gorm.DB` 对象，不会直接返回 error，要通过最后的 `.Error` 拿错误。成功时 `err == nil`，失败时 `err` 是具体错误。
+
+- **为什么把 `gorm.ErrRecordNotFound` 转成 `repo.ErrTaskNotFound`？**
+  因为 biz 层只依赖 `repo.TaskRepo` 接口，不该知道 GORM 的错误。data 层负责把 GORM 错误翻译成 repo 层自己的错误，避免 biz 为了判断错误而 import GORM，从而保持分层干净。
+
 ---
 
 ---
