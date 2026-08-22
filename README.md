@@ -62,36 +62,32 @@
 | Lesson 25 | interface + repo 模式 | `lesson25_repo_pattern/` | ✅ 完成 |
 | Lesson 26 | GORM 入门：连接、模型、CRUD | `lesson26_gorm_intro/` | ✅ 完成 |
 | Lesson 27 | 配置文件读取：yaml + struct | `lesson27_yaml_config/` | ✅ 完成 |
-| Lesson 28 | 依赖注入思想：手写 NewXxx 组装对象 | *待开始* | ⬜ 下一课 |
+| Lesson 28 | 依赖注入思想：手写 NewXxx 组装对象 | `lesson28_di/` `lesson28_di_manual/` | ✅ 完成 |
+| Lesson 29 | Go 泛型入门 | `lesson29_generics/` | ✅ 完成 |
+| Lesson 30 | sync.RWMutex 读写锁 | `lesson30_rwmutex/` | ✅ 完成 |
+| Lesson 31 | log/slog 结构化日志 | `lesson31_slog/` | ✅ 完成 |
+| Lesson 32 | Kafka 消费者入门（Sarama） | `lesson32_sarama/` | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–27，下一课是 Lesson 28。已经掌握 yaml 配置读取，下一步学习依赖注入思想（手写 NewXxx 组装对象），为理解 issue_api 的 wire 做铺垫。**
+**当前进度：已完成 Lesson 01–31，下一课是 Lesson 32。已经掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex 读写锁、slog 结构化日志，下一步学习 Kafka 消费者入门（Sarama），对照 issue-consumer 中的 consumer_group.go。**
 
 ---
 
-## 🧭 issue_api 中间路线（换电脑后优先看）
+## 🧭 issue-consumer 对照路线
 
-当前 `learn_go` 和 `issue_api` 在同一个 VS Code 工作区。后续学习采用“中间路线”：**课程内容要明显向 `issue_api` 靠拢，但不要完全跳进大项目，也不要完全脱离大项目**。
-
-学习主线按“服务端基础能力”调整，目标是为看懂 `issue_api` 铺路。每一课都先用小项目掌握底层概念，再少量对照 `issue_api` 中的真实文件。
+当前学习目标转向看懂 `issue-consumer` 项目。后续课程针对 issue-consumer 中用到的、还未学到的 Go 特性。
 
 ### 后续课程路线
 
-| 课程 | 主题 | 对应 issue_api 能力 |
+| 课程 | 主题 | 对应 issue-consumer |
 |------|------|--------------------|
-| Lesson 21 | 标准库 HTTP 小项目 | 理解 HTTP 请求入口和 handler |
-| Lesson 22 | HTTP 请求体、状态码、统一响应封装 | 对照 `internal/service/service.go` 的统一返回 |
-| Lesson 23 | context 在 HTTP 请求中的用法 | 理解 service/biz 方法参数里的 `context` |
-| Lesson 24 | 简单分层：service / biz / data | 对照 `internal/service`、`internal/biz`、`internal/data` |
-| Lesson 25 | interface + repo 模式 | 对照 `internal/biz/repo` |
-| Lesson 26 | GORM 入门：连接、模型、CRUD | 对照 `internal/model`、`internal/data` |
-| Lesson 27 | 配置文件读取：yaml + struct | 对照 `configs`、`internal/conf` |
-| Lesson 28 | 依赖注入思想：手写 NewXxx 组装对象 | 理解对象如何被组装起来 |
-| Lesson 29 | Wire 入门 | 对照 `cmd/issue_api/wire.go`、`wire_gen.go` |
-| Lesson 30 | Gin 入门 | 对照 `internal/server/gin.go` |
-| Lesson 31 | Gin 分层小项目 | 串起 route -> service -> biz -> repo -> data |
-| Lesson 32 | goroutine + ticker/cron 后台任务 | 对照 `internal/server/cronjob.go` |
-| Lesson 33 | Redis / 外部 HTTP / Jira 这类外部依赖的调用模式 | 理解 data/tool 层如何调用外部系统 |
-| Lesson 34 | 回到 issue_api：从一个真实接口完整追链路 | 从路由追到数据表和错误返回 |
+| Lesson 28 | 依赖注入思想：手写 NewXxx 组装对象 | 对照 `cmd/issue-consumer/main.go` 的组装方式 |
+| Lesson 29 | Go 泛型入门 | 对照 `HTTPResponse[T any]`、`Result[T any]` |
+| Lesson 30 | sync.RWMutex 读写锁 | 对照 `auth.go` 中 token 缓存的并发安全 |
+| Lesson 31 | log/slog 结构化日志 | 对照项目中所有 `slog.Info/Error` 调用 |
+| Lesson 32 | Kafka 消费者入门（Sarama） | 对照 `consumer_group.go` 的消费模式 |
+| Lesson 33 | jsonparser JSON 快速解析 | 对照 `mark_tool.go` 中按路径取 JSON 字段 |
+| Lesson 34 | JWT 解析与校验 | 对照 `util/jwt.go` 的 token 过期判断 |
+| Lesson 35 | TOML 配置读取 | 对照 `configs/config.go` 的 TOML 解码 |
 
 ### 每课固定对照方式
 
@@ -575,9 +571,49 @@ git push
 - **`flag.String("conf", "config.yaml", ...)` 是什么意思？**
   定义一个命令行参数叫 `conf`，默认值是 `"config.yaml"`，第三个字符串是帮助说明。`flag.Parse()` 会解析命令行参数，之后用 `*conf` 拿到值（注意是指针）。这样运行时可以用 `-conf 路径` 覆盖默认值。
 
----
+### Lesson 28 — 依赖注入思想
 
----
+- 依赖注入的核心：**每个对象通过构造函数声明"我需要什么"，由外部（main）把依赖传进去**。
+- 反例：对象内部自己 `new` 依赖，换实现必须改业务代码。
+- 正例：`NewXxx(dep1, dep2)` 传入依赖，换实现只改 main 的组装代码。
+- 组合根（Composition Root）：整个程序**唯一**创建和组装对象的地方，一般是 `main` 函数。
+- 接口定义在"消费者"这一侧：`Logger` 在 biz 层定义（biz 要用日志），`ArticleRepo` 在 repo 层定义（repo 提供数据能力）。
+- 对照 issue-consumer：`main.go` 里 `NewMarkToolHandler(config)` + `NewMConsumerLauncher(cg, handler, topics)` 就是 DI。
+
+### Lesson 29 — Go 泛型
+
+- 泛型解决的核心问题：**减少重复代码**——同一套逻辑，多种类型。
+- 泛型函数：`func Sum[T int | float64](nums []T) T`，`[T int | float64]` 是类型参数。
+- 泛型结构体：`type Box[T any] struct { value T }`，`T` 在字段中使用。
+- 构造函数也要带泛型：`func NewBox[T any](value T) Box[T]`。
+- 方法接收者引用已声明的 `T`，不能重新声明：`(b Box[T]) Get() T`（不是 `Box[T any]`）。
+- 调用时省略类型参数：`Sum([]int{1,2,3})` 编译器推断 `T = int`。
+- 多个类型参数：`Pair[K comparable, V any]`。
+- `comparable` 约束：表示支持 `==` 和 `!=`，用于 `Contains` 这类需要比较的函数。
+- 自定义约束：`type Number interface { ~int | ~float64 }`，`~` 表示底层类型也匹配。
+- 嵌套泛型：`HTTPResponse[HttpBatchImportIssueResp]` 表示外层 T 替换为具体类型。
+- 函数作为参数：`func MapSlice[T any, U any](items []T, fn func(T) U) []U`，`fn` 是函数类型参数。
+- 对照 issue-consumer：`HTTPResponse[T any]` 的 `T` 就是 `Results` 字段的类型；`httpz.PostJsonBodyFormattedWithCtx[HTTPResponse[Xxx]](...)` 是嵌套泛型调用。
+
+### Lesson 30 — sync.RWMutex 读写锁
+
+- `Mutex` 的缺陷：读操作和读操作之间没有冲突，但 Mutex 强制串行化，浪费性能。
+- `RWMutex` 区分读锁和写锁：`RLock()` 读锁可并发，`Lock()` 写锁独占。
+- 规则：读锁互斥写锁（写等读、读等写），但不互斥读锁（可以同时读）。
+- 适用场景：**读多写少**，如 token 缓存、配置缓存、计数器等。
+- 核心对比：`sync.Mutex` 读写都 Lock，`sync.RWMutex` 读用 RLock（可并发）写用 Lock（独占）。
+- 对照 issue-consumer：`auth.go` 中 `rwmux.RLock()` 读缓存 token，`rwmux.Lock()` 写缓存 token。
+
+### Lesson 31 — log/slog 结构化日志
+
+- slog 是 Go 1.21+ 标准库，核心思想：**日志是键值对，不是字符串**。
+- 四种级别：`Debug < Info < Warn < Error`，`HandlerOptions.Level` 控制输出级别。
+- 关键字段：`slog.String("key", "value")`、`slog.Int("key", 42)`、`slog.Int64("key", int64)`、`slog.Float64("key", 3.14)`、`slog.Bool("key", true)`、`slog.Time("key", time.Now())`、`slog.Any("key", value)`。
+- `TextHandler`：人读的文本格式，适合开发环境。
+- `JSONHandler`：机器解析的 JSON 格式，适合生产环境。
+- `AddSource: true`：在日志中输出文件名和行号，方便调试定位。
+- `slog.SetDefault(logger)`：设为全局默认 Logger，项目中任何地方直接 `slog.Info(...)` 使用。
+- 对照 issue-consumer：`main.go` 第 24-34 行创建 JSONHandler + AddSource + SetDefault。
 
 ---
 
