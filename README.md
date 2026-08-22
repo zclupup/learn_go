@@ -68,9 +68,10 @@
 | Lesson 31 | log/slog 结构化日志 | `lesson31_slog/` | ✅ 完成 |
 | Lesson 32 | Kafka 消费者入门（Sarama） | `lesson32_sarama/` | ⬜ 待复习 |
 | Lesson 33 | jsonparser JSON 快速解析 | `lesson33_jsonparser/` | ✅ 完成 |
-| Lesson 34 | JWT 解析与校验 | `lesson34_jwt/` | ⬜ 下一课 |
+| Lesson 34 | JWT 解析与校验 | `lesson34_jwt/` | ✅ 完成 |
+| Lesson 35 | TOML 配置读取 | `lesson35_toml/` | ✅ 完成 |
 
-**当前进度：已完成 Lesson 01–31 + 33，下一课是 Lesson 34。已经掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser，下一步学习 JWT 解析与校验，对照 issue-consumer 中的 util/jwt.go。**
+**当前进度：已完成 Lesson 01–35（全部完成）。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置，能独立阅读和修改 issue-consumer 项目代码。**
 
 ---
 
@@ -634,6 +635,25 @@ git push
 - 判断字段存在：`jsonparser.Get` 返回 `value, dataType, offset, err`。
 - 对比 `json.Unmarshal`：结构固定/字段多时用 Unmarshal，只需几个字段/动态键名时用 jsonparser。
 - 对照 issue-consumer：`mark_tool.go` 中用 `GetString` 取中文键名字段，用 `ArrayEach` 遍历数组。
+
+### Lesson 34 — JWT 解析与校验
+
+- JWT 由三部分组成：`header.payload.signature`，用 `.` 分隔。
+- 核心字段：`exp`（过期时间戳）、`sub`（用户标识）、`iat`（签发时间戳）。
+- `jwt.ParseUnverified`：不验证签名，只解析 token 内容（适合仅检查过期时间）。
+- `jwt.MapClaims`：map 类型的 claims，取值需要类型断言：`claims["exp"].(float64)`。
+- exp 是 Unix 时间戳（秒），和当前时间比较：`now > exp` 表示过期。
+- 对照 issue-consumer：`util/jwt.go` 的 `IsTokenExpired` 函数。
+
+### Lesson 35 — TOML 配置读取
+
+- TOML 是另一种配置格式，用 `[section]` 表示层级，比 YAML 更接近 INI 格式。
+- 解析库：`github.com/BurntSushi/toml`，核心函数 `toml.DecodeFile(path, &config)`。
+- struct tag：`toml:"key_name"`，用法和 `json`、`yaml` tag 完全一样。
+- 嵌套结构：`[parent.child]` 对应嵌套结构体。
+- 对象数组：`[[array]]` 对应结构体切片。
+- 对比 YAML：原理相同（文本格式 → 解析到结构体），区别在格式语法和 tag 名。
+- 对照 issue-consumer：`configs/config.go` 的 `LoadConfig` 函数 + `AppConfigs` 结构体。
 
 ---
 

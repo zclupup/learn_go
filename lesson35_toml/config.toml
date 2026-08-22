@@ -1,0 +1,42 @@
+# TOML 配置文件
+# 对照 issue-consumer configs/config.toml
+
+title = "issue-consumer"
+
+[server]
+host = "0.0.0.0"
+port = 8080
+
+[database]
+host = "localhost"
+port = 3306
+name = "issue_db"
+user = "root"
+password = "password123"
+
+[log]
+level = "info"
+format = "json"
+
+[kafka.marker_tool]
+brokers = "localhost:9092,localhost:9093"
+topics = "marker_tool_topic"
+group = "marker_tool_group"
+version = "2.6.0"
+oldest = true
+assignor = "range"
+
+[kafka.prod_mp3]
+brokers = "localhost:9092"
+topics = "prod_mp3_topic"
+group = "prod_mp3_group"
+version = "2.6.0"
+assignor = "sticky"
+
+[[users]]
+name = "zhangcl"
+role = "admin"
+
+[[users]]
+name = "lisi"
+role = "user"
