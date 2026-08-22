@@ -43,6 +43,43 @@ var ErrTaskNotFound = errors.New("task not found")
 
 // ============ 3. Repo 实现：内存版 ============
 
+// fakerepo 是内存版的 TaskRepo 实现
+type fakeTaskRepo struct {
+	createCalled bool
+	tasks        map[int]*Task
+}
+
+// NewFakeRepo 返回 TaskRepo 接口（隐藏具体实现）
+func NewFakeRepo() TaskRepo {
+	return &fakeTaskRepo{
+		tasks: make(map[int]*Task),
+	}
+}
+
+func (f *fakeTaskRepo) Create(ctx context.Context, task *Task) error {
+	f.createCalled = true
+	task.ID = len(f.tasks) + 1
+	task.CreatedAt = time.Now()
+	f.tasks[task.ID] = task
+	return nil
+}
+
+func (f *fakeTaskRepo) GetByID(ctx context.Context, id int) (*Task, error) {
+	t, ok := f.tasks[id]
+	if !ok {
+		return nil, ErrTaskNotFound
+	}
+	return t, nil
+}
+
+func (f *fakeTaskRepo) List(ctx context.Context) ([]Task, error) {
+	result := make([]Task, 0, len(f.tasks))
+	for _, t := range f.tasks {
+		result = append(result, *t)
+	}
+	return result, nil
+}
+
 // memoryTaskRepo 是小写开头，对外不可见，只能通过 NewMemoryTaskRepo() 创建
 type memoryTaskRepo struct {
 	tasks  map[int]*Task
@@ -108,6 +145,17 @@ func (l *consoleLogger) Info(msg string) {
 	log.Println("[INFO]", msg)
 }
 
+// silentLogger 静默日志实现
+type silentLogger struct{}
+
+func NewSilentLogger() Logger {
+	return &silentLogger{}
+}
+
+func (l *silentLogger) Info(msg string) {
+	// 静默日志，不输出
+}
+
 // ============ 5. 业务层：TaskService（依赖 TaskRepo + Logger）============
 
 // TaskService 是业务逻辑层
@@ -154,22 +202,40 @@ type App struct {
 	TaskService *TaskService
 }
 
+// BuildTaskRepo 负责构建默认仓库实现。
+// 现在默认是内存版，未来可以切到 MySQL 版。
+func BuildTaskRepo() TaskRepo {
+	return NewMemoryTaskRepo()
+}
+
+// BuildLogger 负责构建默认日志实现。
+func BuildLogger() Logger {
+	return NewConsoleLogger()
+}
+
+// BuildTaskService 负责把仓库和日志组装成业务层对象。
+func BuildTaskService(repo TaskRepo, logger Logger) *TaskService {
+	return NewTaskService(repo, logger)
+}
+
+// NewAppWithDeps 允许外部显式注入依赖。
+// 在测试或不同运行环境中可替换 repo/logger。
+func NewAppWithDeps(repo TaskRepo, logger Logger) *App {
+	taskService := BuildTaskService(repo, logger)
+	return &App{TaskService: taskService}
+}
+
 // NewApp 创建并组装所有对象
 // 组装顺序：从底层到上层，像搭积木一样
 func NewApp() *App {
 	// 第 1 步：创建最底层——数据实现
-	taskRepo := NewMemoryTaskRepo()
+	taskRepo := BuildTaskRepo()
 
 	// 第 2 步：创建基础设施——日志
-	logger := NewConsoleLogger()
+	logger := BuildLogger()
 
 	// 第 3 步：把依赖注入到上层——业务层
-	taskService := NewTaskService(taskRepo, logger)
-
-	// 第 4 步：返回组装好的 App
-	return &App{
-		TaskService: taskService,
-	}
+	return NewAppWithDeps(taskRepo, logger)
 }
 
 // ============ 7. 对比：没有 DI 的写法（反例）============
