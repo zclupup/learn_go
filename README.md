@@ -66,9 +66,11 @@
 | Lesson 29 | Go 泛型入门 | `lesson29_generics/` | ✅ 完成 |
 | Lesson 30 | sync.RWMutex 读写锁 | `lesson30_rwmutex/` | ✅ 完成 |
 | Lesson 31 | log/slog 结构化日志 | `lesson31_slog/` | ✅ 完成 |
-| Lesson 32 | Kafka 消费者入门（Sarama） | `lesson32_sarama/` | ⬜ 下一课 |
+| Lesson 32 | Kafka 消费者入门（Sarama） | `lesson32_sarama/` | ⬜ 待复习 |
+| Lesson 33 | jsonparser JSON 快速解析 | `lesson33_jsonparser/` | ✅ 完成 |
+| Lesson 34 | JWT 解析与校验 | `lesson34_jwt/` | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–31，下一课是 Lesson 32。已经掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex 读写锁、slog 结构化日志，下一步学习 Kafka 消费者入门（Sarama），对照 issue-consumer 中的 consumer_group.go。**
+**当前进度：已完成 Lesson 01–31 + 33，下一课是 Lesson 34。已经掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser，下一步学习 JWT 解析与校验，对照 issue-consumer 中的 util/jwt.go。**
 
 ---
 
@@ -614,6 +616,24 @@ git push
 - `AddSource: true`：在日志中输出文件名和行号，方便调试定位。
 - `slog.SetDefault(logger)`：设为全局默认 Logger，项目中任何地方直接 `slog.Info(...)` 使用。
 - 对照 issue-consumer：`main.go` 第 24-34 行创建 JSONHandler + AddSource + SetDefault。
+
+### Lesson 32 — Kafka 消费者入门（Sarama 模式）
+
+- Kafka 是消息队列：生产者 → Topic → 消费者组。
+- Sarama 的 `ConsumerGroupHandler` 接口有 3 个方法：`Setup`、`Cleanup`、`ConsumeClaim`。
+- Sarama 回调模式：分配分区 → Setup → ConsumeClaim（逐条处理消息）→ Cleanup。
+- 消息通过 `claim.Messages()` channel 传递，消费者从 channel 读消息。
+- 对照 issue-consumer：`consumer_group.go` 的 `Run` 方法调用 `client.Consume(ctx, topics, handler)`。
+
+### Lesson 33 — jsonparser JSON 快速解析
+
+- `jsonparser` 是第三方 JSON 解析库，**不用定义结构体，按路径直接取值**。
+- 取字符串：`jsonparser.GetString(data, "key")`，支持嵌套路径：`GetString(data, "a", "b", "c")`。
+- 取其他类型：`GetInt`、`GetFloat`、`GetBoolean`。
+- 遍历数组：`jsonparser.ArrayEach(data, func(value []byte, ...) { ... }, "数组键")`。
+- 判断字段存在：`jsonparser.Get` 返回 `value, dataType, offset, err`。
+- 对比 `json.Unmarshal`：结构固定/字段多时用 Unmarshal，只需几个字段/动态键名时用 jsonparser。
+- 对照 issue-consumer：`mark_tool.go` 中用 `GetString` 取中文键名字段，用 `ArrayEach` 遍历数组。
 
 ---
 
