@@ -72,9 +72,10 @@
 | Lesson 35 | TOML 配置读取 | `lesson35_toml/` | ✅ 完成 |
 | Lesson 36 | issue_api 项目结构总览 | `lesson36_issue_api_overview/` | ✅ 完成 |
 | Lesson 37 | Kratos + Gin 路由链路 | `lesson37_kratos_gin_route/` | ✅ 完成 |
-| Lesson 38 | Wire 自动依赖注入 | `lesson38_wire_di/` | ⬜ 下一课 |
+| Lesson 38 | 逐层追踪完整请求链路 | `lesson38_trace_chain/` | ✅ 完成 |
+| Lesson 39 | Wire 自动依赖注入 | `lesson39_wire_di/` | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–37。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置、issue_api 全览、Kratos Gin 嵌套路由，能独立从路由入口追 issue_api 接口链路。**
+**当前进度：已完成 Lesson 01–38。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置、issue_api 全览、Kratos Gin 嵌套路由、逐层追踪完整请求链路，能独立从路由入口追到数据库表。**
 
 ---
 
@@ -692,6 +693,25 @@ git push
   答：Kratos 只是在 Gin 外面套了一层项目规范，路由底层全是你之前已经学会的 Gin 基础语法，没有任何新的需要记忆的概念。
 - 问：所有接口的路由都一定在 gin.go 里吗？
   答：issue_api 里是约定好的，所有路由统一由 `server/gin.go` 注册，不会散落在 service 或其他目录，符合 Kratos 单入口注册路由的规范。
+
+### Lesson 38 — 逐层追踪完整请求链路
+
+- 以 issue_api 真实接口 `batch_import_issue` 为例，从 HTTP 请求到数据库返回，7 层链路每一步都拆开讲清楚。
+- 第 1 步 — HTTP 请求到达：Gin 引擎在路由表里匹配 URL pattern，找到绑定的 handler 方法。
+- 第 2 步 — 路由注册（gin.go）：`prod.POST("/batch_import_issue", ts.HttpBatchImportIssue)` 把 URL 和 handler 绑定。
+- 第 3 步 — Service 绑定请求（service 层）：`c.ShouldBindJSON(&req)` 把 JSON 请求体解析到 rto 结构体。
+- 第 4 步 — Service 调用 Biz：service 不做业务逻辑，只做 3 件事（绑定参数 → 调用 biz → 返回响应）。
+- 第 5 步 — Biz 调用 Repo 接口：biz 只依赖 IssueRepo 接口，不关心底层是 MySQL 还是内存。
+- 第 6 步 — Data 实现接口访问数据库：GORM 调用 `Where → First/Create/Updates`，和 Lesson26 学的完全一样。
+- 第 7 步 — 响应原路返回：data → biz → service → Return(c, err_no, err_msg, results) → Gin 写 HTTP Response。
+- 核心原则：每层只做自己该做的事，错误往上抛，service 层是唯一负责把 error 翻译成 HTTP 响应的地方。
+
+#### 💬 本课疑问与答疑
+
+- 问：为什么之前觉得迷糊，现在看清楚了？
+  答：之前每层是分开学的（route 一课、service 一课、biz 一课、repo 一课），现在把它们串在一起，用同一个真实请求跑一遍，每一层输入什么、输出什么、传给谁，一目了然。
+- 问：拿到 issue_api 任意一个接口，我该怎么追？
+  答：打开 gin.go 找路由 → 找到绑定的 service 方法 → 看 service 方法里调了哪个 useCase → 看 useCase 方法里调了哪个 repo 接口 → 在 data 层找接口实现 → 看最终查哪张表。
 
 ---
 
