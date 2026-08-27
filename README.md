@@ -70,14 +70,17 @@
 | Lesson 33 | jsonparser JSON 快速解析 | `lesson33_jsonparser/` | ✅ 完成 |
 | Lesson 34 | JWT 解析与校验 | `lesson34_jwt/` | ✅ 完成 |
 | Lesson 35 | TOML 配置读取 | `lesson35_toml/` | ✅ 完成 |
+| Lesson 36 | issue_api 项目结构总览 | `lesson36_issue_api_overview/` | ✅ 完成 |
+| Lesson 37 | Kratos + Gin 路由链路 | `lesson37_kratos_gin_route/` | ✅ 完成 |
+| Lesson 38 | Wire 自动依赖注入 | `lesson38_wire_di/` | ⬜ 下一课 |
 
-**当前进度：已完成 Lesson 01–35（全部完成）。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置，能独立阅读和修改 issue-consumer 项目代码。**
+**当前进度：已完成 Lesson 01–37。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置、issue_api 全览、Kratos Gin 嵌套路由，能独立从路由入口追 issue_api 接口链路。**
 
 ---
 
-## 🧭 issue-consumer 对照路线
+## 🧭 issue_api 对照路线
 
-当前学习目标转向看懂 `issue-consumer` 项目。后续课程针对 issue-consumer 中用到的、还未学到的 Go 特性。
+当前学习目标转向看懂 `issue_api` 项目。后续课程围绕 Kratos + Gin、Wire 依赖注入、Service/Biz/Data 分层、GORM 数据访问、配置和定时任务逐步展开。
 
 ### 后续课程路线
 
@@ -91,6 +94,7 @@
 | Lesson 33 | jsonparser JSON 快速解析 | 对照 `mark_tool.go` 中按路径取 JSON 字段 |
 | Lesson 34 | JWT 解析与校验 | 对照 `util/jwt.go` 的 token 过期判断 |
 | Lesson 35 | TOML 配置读取 | 对照 `configs/config.go` 的 TOML 解码 |
+| Lesson 36 | issue_api 项目结构总览 | 对照 `cmd/issue_api/main.go`、`wire.go`、`internal/server/gin.go` |
 
 ### 每课固定对照方式
 
@@ -654,6 +658,40 @@ git push
 - 对象数组：`[[array]]` 对应结构体切片。
 - 对比 YAML：原理相同（文本格式 → 解析到结构体），区别在格式语法和 tag 名。
 - 对照 issue-consumer：`configs/config.go` 的 `LoadConfig` 函数 + `AppConfigs` 结构体。
+
+### Lesson 36 — issue_api 项目结构总览
+
+- `issue_api` 是 Kratos + Gin 项目，整体可以先按 `main -> server/router -> service -> biz -> repo/data` 这条线理解。
+- `cmd/issue_api/main.go` 是入口：读取配置、初始化日志和全局对象、检查配置、初始化业务，再通过 `wireApp(...)` 组装并启动服务。
+- `cmd/issue_api/wire.go` 是依赖注入声明：`server.ProviderSet`、`service.ProviderSet`、`biz.ProviderSet`、`data.ProviderSet`、`account.ProviderSet` 一起组成 App。
+- `internal/server/gin.go` 负责注册路由，例如 `/api/v1/issue_manage/prod/batch_import_issue` 会进入 `TaskService.HttpBatchImportIssue`。
+- `internal/service` 像 controller：绑定请求参数，调用 usecase，最后用 `Return` 统一返回 `err_no / err_msg / results`。
+- `internal/biz` 放业务逻辑，`internal/biz/repo` 放接口，`internal/data` 负责实现接口并访问 MySQL、COS 等基础设施。
+- 读复杂项目时先追一条真实接口链路，比一上来扫所有文件更容易建立全局地图。
+
+#### 💬 本课疑问与答疑
+
+- 问：为什么先学项目结构，而不是马上看业务细节？
+  答：真实业务文件很多，先建立分层地图，后面看到任意函数时才知道它属于入口、路由、参数处理、业务逻辑还是数据访问。
+- 问：Wire 是不是运行时框架？
+  答：不是。Wire 更像“生成组装代码的工具”，`wire.go` 写规则，`wire_gen.go` 生成真实的 `NewXxx(...)` 调用链。
+- 问：一个接口应该怎么追？
+  答：按路由 -> service handler -> rto 请求结构 -> biz/usecase -> repo 接口 -> data 实现 -> model/数据库表的顺序追。
+
+### Lesson 37 — Kratos + Gin 路由链路
+
+- Kratos 路由本质就是 Gin 原生的 `Group()` 嵌套分组，和我们 Lesson22、Lesson23 写的路由分组完全一致，没有魔法。
+- 真实 issue_api 路由嵌套层级：根引擎 `/` → `/api/v1` → `/issue_manage` → `/prod` → 最终绑定 POST handler 方法。
+- 路由最终绑定的不是匿名函数，而是 service 结构体上的方法：`TaskService.HttpBatchImportIssue`，service 结构体提前注入了所有依赖。
+- 请求绑定逻辑固定：`c.ShouldBindJSON(&req)` 传入 req 结构体指针，靠 struct tag 中的 `json:"xxx"` 和 `binding:"required"` 完成映射和校验。
+- 路由注册代码 100% 集中在 `internal/server/gin.go`，找任意接口的第一步直接打开这个文件搜路径即可。
+- Python 对比：和 Flask/Django 装饰器注册路由本质一样，只是用了多层 Group 嵌套统一加前缀，代码更整齐。
+
+#### 💬 本课疑问与答疑
+- 问：之前完全看不懂 Kratos 的路由，为什么现在一下就通了？
+  答：Kratos 只是在 Gin 外面套了一层项目规范，路由底层全是你之前已经学会的 Gin 基础语法，没有任何新的需要记忆的概念。
+- 问：所有接口的路由都一定在 gin.go 里吗？
+  答：issue_api 里是约定好的，所有路由统一由 `server/gin.go` 注册，不会散落在 service 或其他目录，符合 Kratos 单入口注册路由的规范。
 
 ---
 
