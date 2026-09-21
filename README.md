@@ -66,7 +66,6 @@
 | Lesson 29 | Go 泛型入门 | `lesson29_generics/` | ✅ 完成 |
 | Lesson 30 | sync.RWMutex 读写锁 | `lesson30_rwmutex/` | ✅ 完成 |
 | Lesson 31 | log/slog 结构化日志 | `lesson31_slog/` | ✅ 完成 |
-| Lesson 32 | Kafka 消费者入门（Sarama） | `lesson32_sarama/` | ⬜ 待复习 |
 | Lesson 33 | jsonparser JSON 快速解析 | `lesson33_jsonparser/` | ✅ 完成 |
 | Lesson 34 | JWT 解析与校验 | `lesson34_jwt/` | ✅ 完成 |
 | Lesson 35 | TOML 配置读取 | `lesson35_toml/` | ✅ 完成 |
@@ -75,9 +74,19 @@
 | Lesson 38 | 逐层追踪完整请求链路 | `lesson38_trace_chain/` | ✅ 完成 |
 | Lesson 39 | Wire 自动依赖注入 | `lesson39_wire_di/` | ✅ 完成 |
 | Lesson 40 | issue_api main 启动逻辑 | `lesson40_main_startup/` | ✅ 完成 |
-| Lesson 41 | 临时 | `lesson41_xxx/` | ⬜ 下一课 |
+| Lesson 41 | 自定义错误 utils.CError 与统一响应 Return | `lesson41_error_response/` | ✅ 完成 |
+| Lesson 42 | GORM 事务控制与批量操作 | `lesson42_gorm_transaction/` | ⬜ 下一课 |
+| Lesson 43 | Task 核心实体与生命周期状态机流转 | `lesson43_task_statemachine/` | ⬜ 待开始 |
+| Lesson 44 | 多租户与业务分支架构（PSD vs Voyah J6P） | `lesson44_multitenant/` | ⬜ 待开始 |
+| Lesson 45 | Cron 定时任务与常驻 Goroutine 轮询 | `lesson45_cron_goroutine/` | ⬜ 待开始 |
+| Lesson 46 | Redis 分布式锁与单主调度策略 | `lesson46_redis_lock/` | ⬜ 待开始 |
+| Lesson 47 | 外部服务集成与多客户端设计（以 Jira/COS 为例） | `lesson47_external_clients/` | ⬜ 待开始 |
+| Lesson 48 | Protobuf 语法与代码生成（make config/api） | `lesson48_protobuf/` | ⬜ 待开始 |
+| Lesson 49 | 可观测性与 OTel (OpenTelemetry) 链路追踪 | `lesson49_otel/` | ⬜ 待开始 |
+| Lesson 50 | 业务单测编写与 Mock 实战 | `lesson50_testing_mock/` | ⬜ 待开始 |
+| Lesson 51 | 终极实战：从零为 issue_api 扩展一个新功能接口 | `lesson51_full_feature/` | ⬜ 待开始 |
 
-**当前进度：已完成 Lesson 01–40。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置、issue_api 全览、Kratos Gin 嵌套路由、逐层追踪完整请求链路、Wire 自动依赖注入、main 启动流程，能独立阅读 issue_api 任意接口和启动逻辑。**
+**当前进度：已完成 Lesson 01–41。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置、issue_api 全览、Kratos Gin 嵌套路由、逐层追踪完整请求链路、Wire 自动依赖注入、main 启动流程、自定义错误 utils.CError 与统一响应 Return，能独立阅读 issue_api 任意接口和启动逻辑。**
 
 ---
 
@@ -93,11 +102,25 @@
 | Lesson 29 | Go 泛型入门 | 对照 `HTTPResponse[T any]`、`Result[T any]` |
 | Lesson 30 | sync.RWMutex 读写锁 | 对照 `auth.go` 中 token 缓存的并发安全 |
 | Lesson 31 | log/slog 结构化日志 | 对照项目中所有 `slog.Info/Error` 调用 |
-| Lesson 32 | Kafka 消费者入门（Sarama） | 对照 `consumer_group.go` 的消费模式 |
 | Lesson 33 | jsonparser JSON 快速解析 | 对照 `mark_tool.go` 中按路径取 JSON 字段 |
 | Lesson 34 | JWT 解析与校验 | 对照 `util/jwt.go` 的 token 过期判断 |
 | Lesson 35 | TOML 配置读取 | 对照 `configs/config.go` 的 TOML 解码 |
 | Lesson 36 | issue_api 项目结构总览 | 对照 `cmd/issue_api/main.go`、`wire.go`、`internal/server/gin.go` |
+| Lesson 37 | Kratos + Gin 路由链路 | 对照 `internal/server/gin.go` 的嵌套路由机制 |
+| Lesson 38 | 逐层追踪完整请求链路 | 对照 `Service -> Biz -> Data` 链路 |
+| Lesson 39 | Wire 自动依赖注入 | 对照 `wire.go` 与 `wire_gen.go` |
+| Lesson 40 | issue_api main 启动逻辑 | 对照 `cmd/issue_api/main.go` 8 步启动流程 |
+| Lesson 41 | 自定义错误 utils.CError 与统一响应 | 对照 `internal/utils/error.go` 与 `service.Return` |
+| Lesson 42 | GORM 事务控制与批量操作 | 对照 `internal/data/transaction.go` |
+| Lesson 43 | Task 实体与状态机流转 | 对照 `internal/biz/task/task.go` |
+| Lesson 44 | 多租户与业务分支架构 | 对照 `tool.GlobalConf.Project.ProjectName` |
+| Lesson 45 | Cron 定时任务与常驻 Goroutine | 对照 `internal/server/cronjob.go` |
+| Lesson 46 | Redis 分布式锁与单主调度 | 对照 `internal/data/redis.go` |
+| Lesson 47 | 外部服务集成与多客户端设计 | 对照 `internal/tool/jira/jira.go` 与 `cosfs.go` |
+| Lesson 48 | Protobuf 语法与代码生成 | 对照 `internal/conf/conf.proto` 与 `api/task/task.proto` |
+| Lesson 49 | 可观测性与 OTel 链路追踪 | 对照 `internal/server/otel.go` 与 main 中 otelShutdown |
+| Lesson 50 | 业务单测编写与 Mock 实战 | 对照 `internal/biz/safety/` 单元测试 |
+| Lesson 51 | 终极实战：扩展一个新功能接口 | 串联 Proto/Service/Biz/Data 全链路实操 |
 
 ### 每课固定对照方式
 
@@ -625,14 +648,6 @@ git push
 - `slog.SetDefault(logger)`：设为全局默认 Logger，项目中任何地方直接 `slog.Info(...)` 使用。
 - 对照 issue-consumer：`main.go` 第 24-34 行创建 JSONHandler + AddSource + SetDefault。
 
-### Lesson 32 — Kafka 消费者入门（Sarama 模式）
-
-- Kafka 是消息队列：生产者 → Topic → 消费者组。
-- Sarama 的 `ConsumerGroupHandler` 接口有 3 个方法：`Setup`、`Cleanup`、`ConsumeClaim`。
-- Sarama 回调模式：分配分区 → Setup → ConsumeClaim（逐条处理消息）→ Cleanup。
-- 消息通过 `claim.Messages()` channel 传递，消费者从 channel 读消息。
-- 对照 issue-consumer：`consumer_group.go` 的 `Run` 方法调用 `client.Consume(ctx, topics, handler)`。
-
 ### Lesson 33 — jsonparser JSON 快速解析
 
 - `jsonparser` 是第三方 JSON 解析库，**不用定义结构体，按路径直接取值**。
@@ -753,6 +768,31 @@ git push
   答：biz.Init() 处理的 Redis、雪花 ID、队列等是全局基础设施，不依赖具体的业务对象。wireApp() 才创建数据库连接和业务对象，顺序不能颠倒。
 - 问：defer 链的执行顺序是怎样的？
   答：后进先出（栈）。main 里按先后顺序写了 3 个 defer：c.Close() → otelShutdown → cleanup()，执行时逆序：cleanup() → otelShutdown → c.Close()。
+
+### Lesson 41 — 自定义错误 utils.CError 与统一响应 Return
+
+- Go 自定义 error 的原理：任何实现了 `Error() string` 方法的结构体都可以当作标准 `error` 接口返回。
+- 业务错误码设计：定义全局业务常量（`ErrRequestParams = 400000`, `ErrVinTooShort = 400001`, `ErrCommon = 500500` 等）。
+- 黑魔法 `runtime.Caller(1)`：自动在运行时获取调用方（上层业务代码）的文件名和行号，排错日志一目了然。
+- `service.Return` 统一响应设计：
+  - 通过类型断言 `if e, ok := err.(*utils.CError); ok` 判断是否为特定业务错误，精准提取业务 `errNo` 和 `errMsg`。
+  - 普通原生 error 则回退使用兜底错误码（如 500500）。
+  - HTTP 状态码统一返回 200，真实错误码和错误信息封装在 JSON 体 `{"err_no": 400001, "err_msg": "...", "results": ...}` 中。
+- 对照 issue_api：`internal/utils/error.go`（CError 与 NewCError）与 `internal/service/service.go`（Response 与 Return 函数）。
+
+#### 💬 本课疑问与答疑
+- 问：`resp := Response{}` 初始化的结果是什么？
+  答：Go 语言所有字段被赋予零值（int64 是 0，string 是 ""，interface{} 是 nil），得到 `Response{ErrNo:0, ErrMsg:"", Results:nil}`。
+- 问：类型断言 `err.(*CError)` 和类型转换有什么区别？
+  答：类型转换（如 `int64(a)`）发生在两个已知且兼容的具体类型之间；类型断言（如 `x.(T)`）必须从接口盒子（如 `interface{}` 或 `error`）中，在运行时尝试提取其底层包装的具体真实类型。
+- 问：怎么知道一个结构体实现了哪个接口？
+  答：Go 采用鸭子类型隐式实现。可以用 `var _ error = (*CError)(nil)` 在编译期做静态接口断言，少写或错写方法编译器直接标红报错；IDE 中可用 Shift+F12 或向上箭头查看实现的接口。
+- 问：`var _ error = (*CError)(nil)` 中为什么 `*CError` 要加括号？
+  答：因为前缀星号 `*` 既可以是指针修饰符也可以是解引用运算符。加括号明确告诉编译器 `(*CError)` 是完整的指针类型名，消除语法歧义；若不加括号写成 `*CError(nil)` 会被解析为解引用操作而导致编译报错。
+- 问：哪些 struct 可以传值 `nil`？
+  答：普通值类型 struct 永远不能传 `nil`（它的零值是所有字段的零值集合）；只有结构体指针 `*Struct` 可以为 `nil`（因为存的是地址）。Go 中能为 `nil` 的只有指针、切片、映射、通道、接口、函数 6 种类型。
+- 问：函数类型为 `nil` 和函数返回函数的场景？
+  答：在 Go 中函数是一等公民，函数类型（如 `func(context.Context) error`）未赋值时零值就是 `nil`。如 `otel.go` 的 `InitOtel` 初始化时返回关闭函数 `shutdown`（未启用时返回 `nil`），退出时调用方判空后直接加括号 `otelShutdown(ctx)` 执行，实现优雅的资源清理闭包设计。
 
 ---
 
