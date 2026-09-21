@@ -75,8 +75,8 @@
 | Lesson 39 | Wire 自动依赖注入 | `lesson39_wire_di/` | ✅ 完成 |
 | Lesson 40 | issue_api main 启动逻辑 | `lesson40_main_startup/` | ✅ 完成 |
 | Lesson 41 | 自定义错误 utils.CError 与统一响应 Return | `lesson41_error_response/` | ✅ 完成 |
-| Lesson 42 | GORM 事务控制与批量操作 | `lesson42_gorm_transaction/` | ⬜ 下一课 |
-| Lesson 43 | Task 核心实体与生命周期状态机流转 | `lesson43_task_statemachine/` | ⬜ 待开始 |
+| Lesson 42 | GORM 事务控制与批量操作 | `lesson42_gorm_transaction/` | ✅ 完成 |
+| Lesson 43 | Task 核心实体与生命周期状态机流转 | `lesson43_task_statemachine/` | ⬜ 下一课 |
 | Lesson 44 | 多租户与业务分支架构（PSD vs Voyah J6P） | `lesson44_multitenant/` | ⬜ 待开始 |
 | Lesson 45 | Cron 定时任务与常驻 Goroutine 轮询 | `lesson45_cron_goroutine/` | ⬜ 待开始 |
 | Lesson 46 | Redis 分布式锁与单主调度策略 | `lesson46_redis_lock/` | ⬜ 待开始 |
@@ -86,7 +86,7 @@
 | Lesson 50 | 业务单测编写与 Mock 实战 | `lesson50_testing_mock/` | ⬜ 待开始 |
 | Lesson 51 | 终极实战：从零为 issue_api 扩展一个新功能接口 | `lesson51_full_feature/` | ⬜ 待开始 |
 
-**当前进度：已完成 Lesson 01–41。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置、issue_api 全览、Kratos Gin 嵌套路由、逐层追踪完整请求链路、Wire 自动依赖注入、main 启动流程、自定义错误 utils.CError 与统一响应 Return，能独立阅读 issue_api 任意接口和启动逻辑。**
+**当前进度：已完成 Lesson 01–42。已掌握 Go 基础语法、分层架构、依赖注入、泛型、RWMutex、slog、jsonparser、JWT、TOML 配置、issue_api 全览、Kratos Gin 嵌套路由、逐层追踪完整请求链路、Wire 自动依赖注入、main 启动流程、自定义错误 utils.CError 与统一响应 Return、GORM 事务控制与批量操作，能独立阅读 issue_api 任意接口和启动逻辑。**
 
 ---
 
@@ -793,6 +793,25 @@ git push
   答：普通值类型 struct 永远不能传 `nil`（它的零值是所有字段的零值集合）；只有结构体指针 `*Struct` 可以为 `nil`（因为存的是地址）。Go 中能为 `nil` 的只有指针、切片、映射、通道、接口、函数 6 种类型。
 - 问：函数类型为 `nil` 和函数返回函数的场景？
   答：在 Go 中函数是一等公民，函数类型（如 `func(context.Context) error`）未赋值时零值就是 `nil`。如 `otel.go` 的 `InitOtel` 初始化时返回关闭函数 `shutdown`（未启用时返回 `nil`），退出时调用方判空后直接加括号 `otelShutdown(ctx)` 执行，实现优雅的资源清理闭包设计。
+
+### Lesson 42 — GORM 事务控制与批量操作
+
+- 事务的必要性：涉及多张表同时写（如创建主任务 + 插入车牌关联表），保证要么全成功，要么全部回滚（ACID 原子性），杜绝孤儿脏数据。
+- 模式 A（官方推荐闭包事务）：`db.Transaction(func(tx *gorm.DB) error { ... })`。返回 `error` 自动 Rollback，返回 `nil` 自动 Commit。
+- 模式 B（手动事务 + defer 回滚/提交，issue_api 实战写法）：
+  - `tx := t.transRepo.BeginTransaction()` 显式开启；
+  - `defer func() { if err != nil { tx.Rollback(); return }; tx.Commit() }()` 统一收敛退出状态；
+  - 内部全部使用 `tx` 执行数据库增删改查。
+- 批量插入优化：杜绝 for 循环单条 `db.Create`，使用 `db.CreateInBatches(slice, batchSize)` 打包生成多值 SQL，大幅降低网络往返 I/O。
+- 对照 issue_api：`internal/data/transaction.go`（TransactionRepo 事务封装）与 `internal/biz/task/task.go`（任务创建与事务回滚链路）。
+
+#### 💬 本课疑问与答疑
+- 问：defer 在什么时候执行？
+  答：函数不退它不跑，函数彻底退出（return）的最后一瞬间才会触发执行。所以可以利用 defer 在获取资源处就地登记清理逻辑，避免在各个 return 处遗漏。
+- 问：什么叫闭包？内部函数可以“偷用”外部变量是语法错误吗？
+  答：闭包 = 函数 + 其捕获的外部变量。这是几乎所有现代高级语言都支持的核心语法（词法作用域特性）。定义在大括号内部的代码块天生拥有访问包裹它的外层变量的合法权利，且是以引用的方式捕获，因此 defer 里的闭包在最后执行时能读到外部被修改后的最新 err。
+- 问：在事务中如果不小心把 `tx.Create` 写成了 `db.Create` 会怎样？
+  答：db 是自动提交的独立会话，一旦执行立即持久化。出故障时 tx 只能回滚 tx 写的数据，用 db 写的脏数据会永久留在数据库成为孤儿数据，还会导致事务内读不到刚插入的数据甚至引发数据库行锁死锁。铁律：进入事务后一律只能用 tx。
 
 ---
 
